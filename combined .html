@@ -1,0 +1,6374 @@
+Below is a single combined HTML file that merges the two systems into one BCET management portal, including login/roles, dashboard, student management, lecturers, attendance, face recognition, canteen, courses, fees, placements, notices, college information, search/filtering, CSV export, charts, dark mode, chatbot, and localStorage persistence.
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>BCET Advanced College Management System</title>
+
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.3/dist/face-api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+ --primary:#176db0;
+ --primaryDark:#0d3150;
+ --sidebar:#092b49;
+ --bg:#f3f6fa;
+ --card:#fff;
+ --text:#172033;
+ --muted:#69778b;
+ --border:#e3e9f0;
+ --green:#14966d;
+ --orange:#ed9919;
+ --red:#dc4d42;
+ --blue:#176db0;
+ --shadow:0 8px 28px rgba(21,52,86,.08);
+}
+
+body{
+ font-family:Inter,Segoe UI,Arial,sans-serif;
+ background:var(--bg);
+ color:var(--text);
+}
+
+body.dark{
+ --bg:#101820;
+ --card:#17232d;
+ --text:#edf3f8;
+ --muted:#a5b2c1;
+ --border:#2a3b47;
+}
+
+*{scrollbar-width:thin}
+
+button,input,select{font:inherit}
+
+button{cursor:pointer;border:0}
+
+.hidden{display:none!important}
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+.login{
+ min-height:100vh;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ background:linear-gradient(135deg,#062b49,#0784d1);
+ padding:20px;
+}
+
+.login-box{
+ width:430px;
+ max-width:100%;
+ background:white;
+ padding:35px;
+ border-radius:20px;
+ box-shadow:0 25px 60px #001b2d55;
+}
+
+.logo-row{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ margin-bottom:25px;
+}
+
+.logo-icon{
+ width:50px;
+ height:50px;
+ border-radius:50%;
+ display:grid;
+ place-items:center;
+ background:#087bd1;
+ color:white;
+ font-size:25px;
+ font-weight:bold;
+}
+
+.logo-row h2{margin:0}
+.logo-row small{color:#667085}
+
+.roles{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:8px;
+ margin:20px 0;
+}
+
+.roles button{
+ padding:11px;
+ border-radius:8px;
+ background:#edf4fa;
+}
+
+.roles button.active{
+ background:#087bd1;
+ color:white;
+}
+
+.field{margin:14px 0}
+
+.field label{
+ display:block;
+ font-weight:bold;
+ font-size:13px;
+ margin-bottom:6px;
+}
+
+.field input,
+.field select,
+.field textarea{
+ width:100%;
+ padding:12px;
+ border:1px solid #d7dfeb;
+ border-radius:9px;
+ outline:none;
+}
+
+.primary{
+ width:100%;
+ padding:13px;
+ border-radius:9px;
+ background:#087bd1;
+ color:white;
+ font-weight:bold;
+}
+
+.demo{
+ margin-top:15px;
+ padding:12px;
+ border-radius:9px;
+ background:#f3f6fa;
+ font-size:12px;
+ line-height:1.8;
+}
+
+/* =========================================================
+   APP
+========================================================= */
+
+.app{
+ min-height:100vh;
+}
+
+.sidebar{
+ width:260px;
+ background:linear-gradient(180deg,#103653,#082239);
+ color:white;
+ position:fixed;
+ top:0;
+ bottom:0;
+ left:0;
+ z-index:1000;
+}
+
+.brand{
+ height:86px;
+ display:flex;
+ align-items:center;
+ gap:13px;
+ padding:18px;
+ border-bottom:1px solid rgba(255,255,255,.1);
+}
+
+.brand .logo-icon{
+ width:48px;
+ height:48px;
+}
+
+.brand h2{font-size:16px}
+.brand small{
+ display:block;
+ color:#b9c9d9;
+ font-size:11px;
+}
+
+.nav{
+ padding:18px 12px;
+ display:grid;
+ gap:4px;
+}
+
+.nav button{
+ width:100%;
+ background:transparent;
+ color:#dbe6f0;
+ padding:13px 15px;
+ border-radius:9px;
+ text-align:left;
+ display:flex;
+ gap:12px;
+ align-items:center;
+ font-weight:600;
+}
+
+.nav button:hover,
+.nav button.active{
+ background:#176db0;
+ color:#fff;
+}
+
+.nav svg{
+ width:18px;
+}
+
+.logout{
+ position:absolute;
+ bottom:18px;
+ left:14px;
+ right:14px;
+ padding:12px;
+ background:#e6332a;
+ color:white;
+ border-radius:9px;
+ font-weight:bold;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+}
+
+.main{
+ margin-left:260px;
+ min-height:100vh;
+}
+
+.header{
+ height:86px;
+ background:linear-gradient(100deg,#164c79,#1678bd);
+ color:#fff;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ padding:0 30px;
+ position:sticky;
+ top:0;
+ z-index:900;
+ box-shadow:0 4px 18px rgba(0,0,0,.12);
+}
+
+.header-title strong{
+ font-size:19px;
+}
+
+.header-title span{
+ display:block;
+ font-size:12px;
+ opacity:.8;
+ margin-top:4px;
+}
+
+.header-right{
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+
+.icon{
+ width:40px;
+ height:40px;
+ border:0;
+ border-radius:50%;
+ display:grid;
+ place-items:center;
+ background:rgba(255,255,255,.15);
+ color:#fff;
+ cursor:pointer;
+}
+
+.admin{
+ display:flex;
+ align-items:center;
+ gap:9px;
+}
+
+.avatar{
+ width:39px;
+ height:39px;
+ border-radius:50%;
+ background:white;
+ color:#176db0;
+ display:grid;
+ place-items:center;
+ font-weight:800;
+}
+
+.content{
+ padding:28px;
+ max-width:1800px;
+ margin:auto;
+}
+
+/* =========================================================
+   COMMON
+========================================================= */
+
+.section{
+ display:none;
+}
+
+.section.active{
+ display:block;
+}
+
+.title{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:15px;
+ margin-bottom:22px;
+}
+
+.title h1{
+ font-size:28px;
+}
+
+.title p{
+ color:var(--muted);
+ margin-top:5px;
+}
+
+.btn{
+ border:0;
+ border-radius:8px;
+ padding:10px 15px;
+ cursor:pointer;
+ font-weight:700;
+ display:inline-flex;
+ gap:7px;
+ align-items:center;
+}
+
+.btn-primary{
+ background:var(--primary);
+ color:#fff;
+}
+
+.btn-green{
+ background:var(--green);
+ color:#fff;
+}
+
+.btn-orange{
+ background:var(--orange);
+ color:#fff;
+}
+
+.btn-light{
+ background:#edf2f7;
+ color:#26394d;
+}
+
+.btn-red{
+ background:var(--red);
+ color:#fff;
+}
+
+.card{
+ background:var(--card);
+ border:1px solid var(--border);
+ border-radius:15px;
+ padding:22px;
+ box-shadow:var(--shadow);
+}
+
+.stats{
+ display:grid;
+ grid-template-columns:repeat(5,1fr);
+ gap:18px;
+ margin-bottom:20px;
+}
+
+.stat{
+ background:var(--card);
+ border:1px solid var(--border);
+ border-radius:15px;
+ padding:20px;
+ box-shadow:var(--shadow);
+}
+
+.stat-icon{
+ width:43px;
+ height:43px;
+ border-radius:10px;
+ background:#eaf4fc;
+ color:var(--primary);
+ display:grid;
+ place-items:center;
+ margin-bottom:12px;
+}
+
+.stat h2{
+ font-size:28px;
+ margin-bottom:4px;
+}
+
+.stat p{
+ color:var(--muted);
+ font-size:13px;
+}
+
+.dashboard-grid{
+ display:grid;
+ grid-template-columns:1.5fr 1fr;
+ gap:20px;
+ margin-bottom:20px;
+}
+
+.card-head{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:10px;
+ margin-bottom:18px;
+}
+
+.card-head h2{
+ font-size:18px;
+}
+
+.chart{
+ height:280px;
+}
+
+.toolbar{
+ display:flex;
+ gap:10px;
+ flex-wrap:wrap;
+ margin-bottom:18px;
+}
+
+.search{
+ flex:1;
+ min-width:240px;
+ position:relative;
+}
+
+.search input{
+ width:100%;
+ padding:13px 15px 13px 42px;
+ border:1px solid var(--border);
+ border-radius:9px;
+ outline:none;
+ background:var(--card);
+ color:var(--text);
+}
+
+.search svg{
+ position:absolute;
+ left:14px;
+ top:13px;
+ color:#8391a3;
+ width:18px;
+}
+
+.filter{
+ padding:12px;
+ border:1px solid var(--border);
+ border-radius:9px;
+ background:var(--card);
+ color:var(--text);
+ outline:none;
+}
+
+.table-container{
+ overflow:auto;
+}
+
+table{
+ width:100%;
+ border-collapse:collapse;
+ min-width:950px;
+}
+
+th,td{
+ padding:14px 13px;
+ border-bottom:1px solid var(--border);
+ text-align:left;
+ font-size:13px;
+}
+
+th{
+ background:#f7f9fc;
+ color:#617087;
+ font-size:11px;
+ text-transform:uppercase;
+ letter-spacing:.5px;
+}
+
+body.dark th{
+ background:#1d2b36;
+}
+
+tr:hover td{
+ background:rgba(23,109,176,.035);
+}
+
+.badge{
+ display:inline-block;
+ padding:5px 9px;
+ border-radius:20px;
+ font-size:10px;
+ font-weight:800;
+}
+
+.active-badge,
+.green{
+ background:#e4f8ef;
+ color:#10835f;
+}
+
+.pending,
+.orange{
+ background:#fff2db;
+ color:#bd7900;
+}
+
+.inactive,
+.red{
+ background:#ffe8e5;
+ color:#c0392b;
+}
+
+.blue{
+ background:#dbeafe;
+ color:#1d4ed8;
+}
+
+.student{
+ display:flex;
+ align-items:center;
+ gap:10px;
+}
+
+.student-avatar{
+ width:38px;
+ height:38px;
+ border-radius:50%;
+ display:grid;
+ place-items:center;
+ background:#e7f3fc;
+ color:#176db0;
+ font-weight:800;
+ flex-shrink:0;
+}
+
+.student-name strong{
+ display:block;
+ font-size:13px;
+}
+
+.student-name small{
+ color:#8793a3;
+}
+
+.action{
+ border:0;
+ background:#edf3f8;
+ width:34px;
+ height:34px;
+ border-radius:7px;
+ cursor:pointer;
+ color:#31516d;
+ display:inline-grid;
+ place-items:center;
+}
+
+.action:hover{
+ background:#dbeaf6;
+}
+
+.actions{
+ display:flex;
+ gap:7px;
+ flex-wrap:wrap;
+}
+
+.progress{
+ height:8px;
+ background:#e8edf4;
+ border-radius:20px;
+ overflow:hidden;
+}
+
+.progress i{
+ display:block;
+ height:100%;
+ background:#16a34a;
+}
+
+.pagination{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-top:18px;
+ color:var(--muted);
+ font-size:13px;
+}
+
+.pages{
+ display:flex;
+ gap:5px;
+}
+
+.pages button{
+ border:1px solid var(--border);
+ background:var(--card);
+ color:var(--text);
+ width:34px;
+ height:34px;
+ border-radius:7px;
+ cursor:pointer;
+}
+
+.pages button.active{
+ background:var(--primary);
+ color:white;
+ border-color:var(--primary);
+}
+
+.info-grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:20px;
+}
+
+.info-row{
+ display:grid;
+ grid-template-columns:140px 1fr;
+ padding:13px 0;
+ border-bottom:1px solid var(--border);
+ font-size:14px;
+}
+
+.info-row strong{
+ color:#526176;
+}
+
+.menu{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:15px;
+}
+
+.food{
+ border:1px solid var(--border);
+ padding:15px;
+ border-radius:13px;
+}
+
+.food h3{
+ margin-bottom:5px;
+}
+
+.price{
+ color:#087bd1;
+ font-size:18px;
+ font-weight:bold;
+}
+
+/* =========================================================
+   MODALS
+========================================================= */
+
+.modal{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.55);
+ display:none;
+ place-items:center;
+ z-index:3000;
+ padding:20px;
+}
+
+.modal.show{
+ display:grid;
+}
+
+.modal-box{
+ width:min(850px,100%);
+ max-height:92vh;
+ overflow:auto;
+ background:var(--card);
+ color:var(--text);
+ border-radius:18px;
+ padding:25px;
+ box-shadow:0 25px 90px rgba(0,0,0,.3);
+}
+
+.modal-head{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:22px;
+}
+
+.close{
+ border:0;
+ width:36px;
+ height:36px;
+ border-radius:50%;
+ background:#eef2f6;
+ color:#172033;
+ cursor:pointer;
+ font-size:20px;
+}
+
+.detail-header{
+ display:flex;
+ gap:20px;
+ align-items:center;
+ padding:20px;
+ background:linear-gradient(100deg,#edf6fd,#fff);
+ border-radius:13px;
+ margin-bottom:20px;
+}
+
+body.dark .detail-header{
+ background:#1c303d;
+}
+
+.big-avatar{
+ width:75px;
+ height:75px;
+ border-radius:50%;
+ background:#176db0;
+ color:white;
+ display:grid;
+ place-items:center;
+ font-size:28px;
+ font-weight:800;
+}
+
+.detail-header h2{
+ margin-bottom:5px;
+}
+
+.detail-header p{
+ color:var(--muted);
+}
+
+.detail-grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:15px;
+}
+
+.detail-box{
+ border:1px solid var(--border);
+ border-radius:10px;
+ padding:15px;
+}
+
+.detail-box label{
+ display:block;
+ color:var(--muted);
+ font-size:11px;
+ text-transform:uppercase;
+ margin-bottom:5px;
+}
+
+.detail-box strong{
+ font-size:14px;
+}
+
+.form-grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:15px;
+}
+
+.form-actions{
+ display:flex;
+ justify-content:flex-end;
+ gap:10px;
+ margin-top:12px;
+}
+
+/* =========================================================
+   FACE
+========================================================= */
+
+.camera{
+ background:#061b2c;
+ border-radius:15px;
+ overflow:hidden;
+}
+
+.camera video{
+ width:100%;
+ min-height:350px;
+ object-fit:cover;
+}
+
+.face-status{
+ padding:12px;
+ margin-top:10px;
+ background:#edf4fb;
+ border-radius:9px;
+ font-weight:bold;
+ color:#172033;
+}
+
+.face-preview{
+ width:100%;
+ max-height:280px;
+ object-fit:contain;
+ border-radius:12px;
+ background:#f1f5f9;
+}
+
+/* =========================================================
+   CHATBOT
+========================================================= */
+
+.chat{
+ position:fixed;
+ right:25px;
+ bottom:25px;
+ width:370px;
+ height:530px;
+ background:var(--card);
+ border-radius:18px;
+ box-shadow:0 20px 70px rgba(0,0,0,.25);
+ z-index:2000;
+ display:none;
+ overflow:hidden;
+ flex-direction:column;
+}
+
+.chat.open{
+ display:flex;
+}
+
+.chat-head{
+ background:linear-gradient(100deg,#10466f,#177bc0);
+ color:#fff;
+ padding:16px;
+ display:flex;
+ justify-content:space-between;
+}
+
+.chat-body{
+ flex:1;
+ background:#f4f7fa;
+ padding:15px;
+ overflow:auto;
+}
+
+body.dark .chat-body{
+ background:#101820;
+}
+
+.msg{
+ max-width:82%;
+ padding:10px 13px;
+ border-radius:12px;
+ margin-bottom:10px;
+ font-size:13px;
+ line-height:1.5;
+}
+
+.bot{
+ background:#fff;
+ border:1px solid var(--border);
+}
+
+body.dark .bot{
+ background:#17232d;
+}
+
+.user{
+ margin-left:auto;
+ background:#176db0;
+ color:white;
+}
+
+.chat-input{
+ display:flex;
+ gap:7px;
+ padding:10px;
+ border-top:1px solid var(--border);
+}
+
+.chat-input input{
+ flex:1;
+ border:1px solid var(--border);
+ border-radius:20px;
+ padding:10px 14px;
+ outline:none;
+ background:var(--card);
+ color:var(--text);
+}
+
+.send{
+ width:40px;
+ border:0;
+ border-radius:50%;
+ background:#176db0;
+ color:white;
+ cursor:pointer;
+}
+
+/* =========================================================
+   NOTICE
+========================================================= */
+
+.notice{
+ border:1px solid var(--border);
+ border-left:4px solid var(--primary);
+ padding:15px;
+ border-radius:8px;
+ margin-bottom:10px;
+}
+
+.notice h3{
+ font-size:14px;
+ margin-bottom:5px;
+}
+
+.notice p{
+ font-size:12px;
+ color:var(--muted);
+}
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+.toast{
+ position:fixed;
+ right:25px;
+ top:105px;
+ background:#132b40;
+ color:white;
+ padding:14px 18px;
+ border-radius:9px;
+ z-index:5000;
+ transform:translateX(150%);
+ transition:.3s;
+}
+
+.toast.show{
+ transform:translateX(0);
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:1200px){
+ .stats{
+  grid-template-columns:repeat(3,1fr);
+ }
+
+ .dashboard-grid{
+  grid-template-columns:1fr;
+ }
+}
+
+@media(max-width:900px){
+ .sidebar{
+  transform:translateX(-100%);
+  transition:.3s;
+ }
+
+ .sidebar.open{
+  transform:translateX(0);
+ }
+
+ .main{
+  margin-left:0;
+ }
+
+ .stats{
+  grid-template-columns:repeat(2,1fr);
+ }
+
+ .info-grid{
+  grid-template-columns:1fr;
+ }
+
+ .menu{
+  grid-template-columns:repeat(2,1fr);
+ }
+}
+
+@media(max-width:600px){
+ .content{
+  padding:18px;
+ }
+
+ .header{
+  padding:0 15px;
+ }
+
+ .header-title strong{
+  font-size:14px;
+ }
+
+ .header-title span{
+  display:none;
+ }
+
+ .admin span{
+  display:none;
+ }
+
+ .stats{
+  grid-template-columns:1fr;
+ }
+
+ .form-grid,
+ .detail-grid{
+  grid-template-columns:1fr;
+ }
+
+ .menu{
+  grid-template-columns:1fr;
+ }
+
+ .title{
+  align-items:flex-start;
+  flex-direction:column;
+ }
+
+ .chat{
+  width:calc(100% - 20px);
+  right:10px;
+  bottom:10px;
+ }
+}
+</style>
+</head>
+
+<body>
+
+<!-- =========================================================
+     LOGIN SCREEN
+========================================================= -->
+
+<div id="loginScreen" class="login">
+
+<div class="login-box">
+
+<div class="logo-row">
+
+<div class="logo-icon">B</div>
+
+<div>
+<h2>BCET Management</h2>
+<small>Advanced College Management System</small>
+</div>
+
+</div>
+
+<div class="roles">
+
+<button class="active" data-role="admin">
+Admin
+</button>
+
+<button data-role="student">
+Student
+</button>
+
+<button data-role="lecturer">
+Lecturer
+</button>
+
+</div>
+
+<div class="field">
+
+<label>Username / USN</label>
+
+<input
+id="username"
+placeholder="Enter username"
+autocomplete="username">
+
+</div>
+
+<div class="field">
+
+<label>Password</label>
+
+<input
+id="password"
+type="password"
+placeholder="Enter password"
+autocomplete="current-password">
+
+</div>
+
+<button class="primary" onclick="login()">
+LOGIN
+</button>
+
+<div class="demo">
+
+<b>Demo Accounts</b><br>
+
+Admin: admin / admin123<br>
+
+Student: student01 / student123<br>
+
+Lecturer: lecturer01 / lecture123
+
+</div>
+
+</div>
+
+</div>
+
+<!-- =========================================================
+     APPLICATION
+========================================================= -->
+
+<div id="app" class="app hidden">
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar" id="sidebar">
+
+<div class="brand">
+
+<div class="logo-icon">B</div>
+
+<div>
+<h2>BCET</h2>
+<small>College Management System</small>
+</div>
+
+</div>
+
+<nav id="nav" class="nav"></nav>
+
+<button class="logout" onclick="logout()">
+
+<i data-lucide="log-out"></i>
+
+Logout
+
+</button>
+
+</aside>
+
+<!-- MAIN -->
+
+<main class="main">
+
+<header class="header">
+
+<div class="header-title">
+
+<strong>
+Bangalore College of Engineering & Technology
+</strong>
+
+<span>
+Advanced College Management & Student Support Portal
+</span>
+
+</div>
+
+<div class="header-right">
+
+<button class="icon" onclick="toggleSidebar()">
+
+<i data-lucide="menu"></i>
+
+</button>
+
+<button class="icon" onclick="toggleDark()">
+
+<i data-lucide="moon"></i>
+
+</button>
+
+<button
+class="icon"
+onclick="showToast('No new notifications')">
+
+<i data-lucide="bell"></i>
+
+</button>
+
+<div class="admin">
+
+<div class="avatar" id="headerAvatar">
+A
+</div>
+
+<span id="headerUser">
+Administrator
+</span>
+
+</div>
+
+</div>
+
+</header>
+
+<div id="content" class="content"></div>
+
+</main>
+
+</div>
+
+<!-- =========================================================
+     GENERIC MODAL
+========================================================= -->
+
+<div class="modal" id="modal">
+
+<div class="modal-box">
+
+<div id="modalContent"></div>
+
+</div>
+
+</div>
+
+<!-- CHATBOT -->
+
+<div class="chat" id="chat">
+
+<div class="chat-head">
+
+<div>
+
+<strong>🤖 BCET AI Assistant</strong>
+
+<div style="font-size:11px;opacity:.8">
+Online • Student Support
+</div>
+
+</div>
+
+<button
+class="icon"
+onclick="toggleChat()">
+
+×
+</button>
+
+</div>
+
+<div class="chat-body" id="chatBody">
+
+<div class="msg bot">
+
+Hello 👋<br><br>
+
+I can help you search student records,
+courses, fees, attendance, placements,
+canteen information and college details.
+
+</div>
+
+</div>
+
+<div class="chat-input">
+
+<input
+id="chatInput"
+placeholder="Ask about students..."
+onkeydown="if(event.key==='Enter')sendChat()">
+
+<button class="send" onclick="sendChat()">
+
+<i data-lucide="send"></i>
+
+</button>
+
+</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+/* =========================================================
+   DATABASE
+========================================================= */
+
+const DBKEY="BCET_COMBINED_DATABASE";
+
+const defaultDB={
+
+students:[
+
+{
+id:1,
+name:"Rahul Kumar",
+usn:"1BC23CS001",
+gender:"Male",
+dept:"CSE",
+year:"4th Year",
+phone:"9876543210",
+email:"rahul.kumar@gmail.com",
+blood:"O+",
+parent:"Ramesh Kumar",
+parentPhone:"9876500011",
+attendance:92,
+totalFee:85000,
+paidFee:85000,
+face:null,
+status:"Active"
+},
+
+{
+id:2,
+name:"Priya Sharma",
+usn:"1BC23ISE014",
+gender:"Female",
+dept:"ISE",
+year:"4th Year",
+phone:"9876543211",
+email:"priya.sharma@gmail.com",
+blood:"B+",
+parent:"Suresh Sharma",
+parentPhone:"9876500012",
+attendance:95,
+totalFee:85000,
+paidFee:85000,
+face:null,
+status:"Active"
+},
+
+{
+id:3,
+name:"Arjun R",
+usn:"1BC24EC022",
+gender:"Male",
+dept:"ECE",
+year:"3rd Year",
+phone:"9876543212",
+email:"arjun.r@gmail.com",
+blood:"A+",
+parent:"Rajesh R",
+parentPhone:"9876500013",
+attendance:88,
+totalFee:78000,
+paidFee:60000,
+face:null,
+status:"Active"
+},
+
+{
+id:4,
+name:"Sneha Gowda",
+usn:"1BC23CS032",
+gender:"Female",
+dept:"CSE",
+year:"4th Year",
+phone:"9876543213",
+email:"sneha.gowda@gmail.com",
+blood:"O+",
+parent:"Mahesh Gowda",
+parentPhone:"9876500014",
+attendance:91,
+totalFee:85000,
+paidFee:85000,
+face:null,
+status:"Active"
+},
+
+{
+id:5,
+name:"Vikram Singh",
+usn:"1BC24ME045",
+gender:"Male",
+dept:"ME",
+year:"3rd Year",
+phone:"9876543214",
+email:"vikram.singh@gmail.com",
+blood:"B-",
+parent:"Harish Singh",
+parentPhone:"9876500015",
+attendance:84,
+totalFee:76000,
+paidFee:50000,
+face:null,
+status:"Active"
+},
+
+{
+id:6,
+name:"Ananya Rao",
+usn:"1BC24CS052",
+gender:"Female",
+dept:"CSE",
+year:"3rd Year",
+phone:"9876543215",
+email:"ananya.rao@gmail.com",
+blood:"AB+",
+parent:"Prakash Rao",
+parentPhone:"9876500016",
+attendance:97,
+totalFee:85000,
+paidFee:85000,
+face:null,
+status:"Active"
+},
+
+{
+id:7,
+name:"Karthik B",
+usn:"1BC25CIV007",
+gender:"Male",
+dept:"CIVIL",
+year:"2nd Year",
+phone:"9876543216",
+email:"karthik.b@gmail.com",
+blood:"A+",
+parent:"Bharath B",
+parentPhone:"9876500017",
+attendance:86,
+totalFee:72000,
+paidFee:72000,
+face:null,
+status:"Active"
+},
+
+{
+id:8,
+name:"Pooja N",
+usn:"1BC25ISE018",
+gender:"Female",
+dept:"ISE",
+year:"2nd Year",
+phone:"9876543217",
+email:"pooja.n@gmail.com",
+blood:"O-",
+parent:"Nagaraj N",
+parentPhone:"9876500018",
+attendance:94,
+totalFee:80000,
+paidFee:65000,
+face:null,
+status:"Active"
+},
+
+{
+id:9,
+name:"Manoj Kumar",
+usn:"1BC25ECE024",
+gender:"Male",
+dept:"ECE",
+year:"2nd Year",
+phone:"9876543218",
+email:"manoj.k@gmail.com",
+blood:"B+",
+parent:"Ravi Kumar",
+parentPhone:"9876500019",
+attendance:79,
+totalFee:78000,
+paidFee:50000,
+face:null,
+status:"Active"
+},
+
+{
+id:10,
+name:"Divya Shetty",
+usn:"1BC26CS031",
+gender:"Female",
+dept:"CSE",
+year:"1st Year",
+phone:"9876543219",
+email:"divya.shetty@gmail.com",
+blood:"A-",
+parent:"Suresh Shetty",
+parentPhone:"9876500020",
+attendance:98,
+totalFee:85000,
+paidFee:85000,
+face:null,
+status:"Active"
+},
+
+{
+id:11,
+name:"Aditya Rao",
+usn:"1BC26ISE034",
+gender:"Male",
+dept:"ISE",
+year:"1st Year",
+phone:"9876543220",
+email:"aditya.rao@gmail.com",
+blood:"O+",
+parent:"Mohan Rao",
+parentPhone:"9876500021",
+attendance:90,
+totalFee:80000,
+paidFee:70000,
+face:null,
+status:"Active"
+},
+
+{
+id:12,
+name:"Megha S",
+usn:"1BC26ECE041",
+gender:"Female",
+dept:"ECE",
+year:"1st Year",
+phone:"9876543221",
+email:"megha.s@gmail.com",
+blood:"B+",
+parent:"Srinivas S",
+parentPhone:"9876500022",
+attendance:93,
+totalFee:78000,
+paidFee:78000,
+face:null,
+status:"Active"
+},
+
+{
+id:13,
+name:"Nikhil Raj",
+usn:"1BC23ME055",
+gender:"Male",
+dept:"ME",
+year:"4th Year",
+phone:"9876543222",
+email:"nikhil.raj@gmail.com",
+blood:"AB+",
+parent:"Raj Kumar",
+parentPhone:"9876500023",
+attendance:81,
+totalFee:76000,
+paidFee:76000,
+face:null,
+status:"Active"
+},
+
+{
+id:14,
+name:"Aishwarya P",
+usn:"1BC23CIV061",
+gender:"Female",
+dept:"CIVIL",
+year:"4th Year",
+phone:"9876543223",
+email:"aishwarya.p@gmail.com",
+blood:"O+",
+parent:"Prasad P",
+parentPhone:"9876500024",
+attendance:96,
+totalFee:72000,
+paidFee:60000,
+face:null,
+status:"Active"
+},
+
+{
+id:15,
+name:"Rohit M",
+usn:"1BC24CS072",
+gender:"Male",
+dept:"CSE",
+year:"3rd Year",
+phone:"9876543224",
+email:"rohit.m@gmail.com",
+blood:"A+",
+parent:"Manjunath M",
+parentPhone:"9876500025",
+attendance:89,
+totalFee:85000,
+paidFee:85000,
+face:null,
+status:"Active"
+}
+
+],
+
+lecturers:[
+
+{
+id:1,
+name:"Dr. Gopal Krishna",
+employee:"BCET-T001",
+dept:"CSE",
+designation:"Professor",
+email:"gopal@bcet.edu.in",
+phone:"9742258601",
+attendance:"Present"
+},
+
+{
+id:2,
+name:"Dr. Anitha Rao",
+employee:"BCET-T002",
+dept:"ECE",
+designation:"Associate Professor",
+email:"anitha@bcet.edu.in",
+phone:"9742258602",
+attendance:"Present"
+},
+
+{
+id:3,
+name:"Dr. Ramesh Kumar",
+employee:"BCET-T003",
+dept:"ISE",
+designation:"Professor",
+email:"ramesh@bcet.edu.in",
+phone:"9742258603",
+attendance:"Present"
+},
+
+{
+id:4,
+name:"Prof. Mahesh B",
+employee:"BCET-T004",
+dept:"ME",
+designation:"Assistant Professor",
+email:"mahesh@bcet.edu.in",
+phone:"9742258604",
+attendance:"Absent"
+},
+
+{
+id:5,
+name:"Dr. Kavitha S",
+employee:"BCET-T005",
+dept:"CIVIL",
+designation:"Associate Professor",
+email:"kavitha@bcet.edu.in",
+phone:"9742258605",
+attendance:"Present"
+}
+
+],
+
+courses:[
+
+{
+name:"Computer Science & Engineering",
+code:"BCS401",
+dept:"CSE",
+duration:"4 Years",
+seats:60,
+hod:"Dr. Gopal Krishna"
+},
+
+{
+name:"Information Science & Engineering",
+code:"BIS401",
+dept:"ISE",
+duration:"4 Years",
+seats:60,
+hod:"Dr. Ramesh Kumar"
+},
+
+{
+name:"Electronics & Communication",
+code:"BEC401",
+dept:"ECE",
+duration:"4 Years",
+seats:60,
+hod:"Dr. Anitha Rao"
+},
+
+{
+name:"Mechanical Engineering",
+code:"BME401",
+dept:"ME",
+duration:"4 Years",
+seats:60,
+hod:"Prof. Mahesh B"
+},
+
+{
+name:"Civil Engineering",
+code:"BCE401",
+dept:"CIVIL",
+duration:"4 Years",
+seats:60,
+hod:"Dr. Kavitha S"
+}
+
+],
+
+attendance:{},
+
+lecturerAttendance:{},
+
+canteen:[
+
+{
+id:1,
+name:"Masala Dosa",
+category:"Breakfast",
+price:40,
+stock:30
+},
+
+{
+id:2,
+name:"Idli Vada",
+category:"Breakfast",
+price:35,
+stock:40
+},
+
+{
+id:3,
+name:"Veg Meals",
+category:"Lunch",
+price:70,
+stock:50
+},
+
+{
+id:4,
+name:"Paneer Rice",
+category:"Lunch",
+price:80,
+stock:25
+},
+
+{
+id:5,
+name:"Chicken Biryani",
+category:"Lunch",
+price:120,
+stock:30
+},
+
+{
+id:6,
+name:"Lemon Juice",
+category:"Drinks",
+price:25,
+stock:60
+},
+
+{
+id:7,
+name:"Tea",
+category:"Drinks",
+price:15,
+stock:100
+},
+
+{
+id:8,
+name:"Coffee",
+category:"Drinks",
+price:20,
+stock:80
+}
+
+],
+
+orders:[],
+
+notices:[
+
+{
+title:"Internal Assessment Examination",
+message:"The first internal assessment examination starts from 25 September 2026.",
+priority:"Important",
+date:"2026-09-21"
+},
+
+{
+title:"Placement Drive",
+message:"TCS campus recruitment drive for eligible final-year students.",
+priority:"Normal",
+date:"2026-09-21"
+},
+
+{
+title:"Fee Payment Reminder",
+message:"Students should complete pending fee payments before the deadline.",
+priority:"Urgent",
+date:"2026-09-21"
+},
+
+{
+title:"College Holiday",
+message:"College will remain closed on the declared public holiday.",
+priority:"Normal",
+date:"2026-09-21"
+}
+
+]
+
+};
+
+let db=JSON.parse(
+ localStorage.getItem(DBKEY)||"null"
+)||defaultDB;
+
+let role="admin";
+let user=null;
+let page="dashboard";
+
+let currentStudentPage=1;
+const rowsPerPage=8;
+
+let cameraStream=null;
+let recognitionTimer=null;
+let modelsLoaded=false;
+
+let enrollmentChart=null;
+let departmentChart=null;
+
+/* =========================================================
+   DATABASE HELPERS
+========================================================= */
+
+function saveDB(){
+ localStorage.setItem(DBKEY,JSON.stringify(db));
+}
+
+function today(){
+ return new Date().toISOString().split("T")[0];
+}
+
+function escapeHTML(value){
+ return String(value??"")
+ .replaceAll("&","&amp;")
+ .replaceAll("<","&lt;")
+ .replaceAll(">","&gt;")
+ .replaceAll('"',"&quot;")
+ .replaceAll("'","&#039;");
+}
+
+function initials(name){
+ return name
+ .split(" ")
+ .map(x=>x[0])
+ .slice(0,2)
+ .join("")
+ .toUpperCase();
+}
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+document.querySelectorAll(".roles button").forEach(btn=>{
+
+ btn.onclick=()=>{
+
+  document.querySelectorAll(".roles button")
+  .forEach(x=>x.classList.remove("active"));
+
+  btn.classList.add("active");
+
+  role=btn.dataset.role;
+
+ };
+
+});
+
+function login(){
+
+ const username=
+ document.getElementById("username")
+ .value.trim();
+
+ const password=
+ document.getElementById("password")
+ .value;
+
+ let valid=false;
+
+ if(role==="admin"){
+
+  valid=
+   username==="admin" &&
+   password==="admin123";
+
+  user={
+   name:"Administrator"
+  };
+
+ }
+
+ else if(role==="student"){
+
+  valid=
+   username==="student01" &&
+   password==="student123";
+
+  user=db.students[0];
+
+ }
+
+ else if(role==="lecturer"){
+
+  valid=
+   username==="lecturer01" &&
+   password==="lecture123";
+
+  user=db.lecturers[0];
+
+ }
+
+ if(!valid){
+
+  showToast("Invalid username or password");
+
+  return;
+
+ }
+
+ document
+ .getElementById("loginScreen")
+ .classList.add("hidden");
+
+ document
+ .getElementById("app")
+ .classList.remove("hidden");
+
+ buildNavigation();
+
+ render();
+
+ updateHeader();
+
+ lucide.createIcons();
+
+}
+
+function logout(){
+
+ stopCamera();
+
+ user=null;
+
+ document
+ .getElementById("app")
+ .classList.add("hidden");
+
+ document
+ .getElementById("loginScreen")
+ .classList.remove("hidden");
+
+ document.getElementById("username").value="";
+ document.getElementById("password").value="";
+
+}
+
+function updateHeader(){
+
+ const name=user?.name||"Administrator";
+
+ document.getElementById("headerUser")
+ .innerText=name;
+
+ document.getElementById("headerAvatar")
+ .innerText=initials(name).charAt(0);
+
+}
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+function buildNavigation(){
+
+ let menus=[];
+
+ if(role==="admin"){
+
+  menus=[
+   ["dashboard","layout-dashboard","Dashboard"],
+   ["students","graduation-cap","Students"],
+   ["lecturers","users","Lecturers"],
+   ["studentAttendance","clipboard-check","Student Attendance"],
+   ["lecturerAttendance","clock","Lecturer Attendance"],
+   ["face","scan-face","Face Recognition"],
+   ["courses","book-open","Courses"],
+   ["fees","wallet","Fees"],
+   ["placements","briefcase","Placements"],
+   ["canteen","utensils","Canteen"],
+   ["notices","megaphone","Notices"],
+   ["college","building-2","College Information"],
+   ["chat","bot","AI Chatbot"]
+  ];
+
+ }
+
+ else if(role==="student"){
+
+  menus=[
+   ["dashboard","layout-dashboard","My Dashboard"],
+   ["myAttendance","clipboard-check","My Attendance"],
+   ["face","scan-face","Face Attendance"],
+   ["canteen","utensils","Canteen"],
+   ["courses","book-open","Courses"],
+   ["fees","wallet","Fees"],
+   ["placements","briefcase","Placements"],
+   ["notices","megaphone","Notices"],
+   ["college","building-2","College Information"],
+   ["chat","bot","AI Chatbot"]
+  ];
+
+ }
+
+ else{
+
+  menus=[
+   ["dashboard","layout-dashboard","Dashboard"],
+   ["studentAttendance","clipboard-check","Student Attendance"],
+   ["lecturerAttendance","clock","Lecturer Attendance"],
+   ["face","scan-face","Face Attendance"],
+   ["courses","book-open","Courses"],
+   ["canteen","utensils","Canteen"],
+   ["notices","megaphone","Notices"],
+   ["college","building-2","College Information"],
+   ["chat","bot","AI Chatbot"]
+  ];
+
+ }
+
+ document.getElementById("nav").innerHTML=
+
+ menus.map(item=>`
+
+ <button
+ class="${page===item[0]?"active":""}"
+ onclick="openPage('${item[0]}')">
+
+ <i data-lucide="${item[1]}"></i>
+
+ ${item[2]}
+
+ </button>
+
+ `).join("");
+
+ lucide.createIcons();
+
+}
+
+function openPage(p){
+
+ stopCamera();
+
+ page=p;
+
+ buildNavigation();
+
+ render();
+
+ window.scrollTo({
+  top:0,
+  behavior:"smooth"
+ });
+
+}
+
+function toggleSidebar(){
+
+ document
+ .getElementById("sidebar")
+ .classList.toggle("open");
+
+}
+
+function toggleDark(){
+
+ document.body.classList.toggle("dark");
+
+ localStorage.setItem(
+  "BCET_DARK",
+  document.body.classList.contains("dark")
+ );
+
+ if(enrollmentChart){
+
+  enrollmentChart.update();
+  departmentChart.update();
+
+ }
+
+}
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+function render(){
+
+ const pages={
+
+  dashboard:dashboard,
+
+  students:students,
+
+  lecturers:lecturers,
+
+  studentAttendance:studentAttendance,
+
+  lecturerAttendance:lecturerAttendance,
+
+  myAttendance:myAttendance,
+
+  face:faceRecognition,
+
+  courses:courses,
+
+  fees:fees,
+
+  placements:placements,
+
+  canteen:canteen,
+
+  notices:notices,
+
+  college:college,
+
+  chat:chatPage
+
+ };
+
+ const fn=pages[page]||dashboard;
+
+ document.getElementById("content")
+ .innerHTML=fn();
+
+ lucide.createIcons();
+
+ if(page==="dashboard"){
+
+  setTimeout(()=>{
+   createCharts();
+  },50);
+
+ }
+
+}
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
+function dashboard(){
+
+ if(role==="student")
+ return studentDashboard();
+
+ const totalStudents=db.students.length;
+
+ const totalLecturers=db.lecturers.length;
+
+ const totalCourses=db.courses.length;
+
+ const totalNotices=db.notices.length;
+
+ const orders=db.orders.length;
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>BCET Dashboard</h1>
+
+ <p>
+ Complete college management overview
+ </p>
+
+ </div>
+
+ <button
+ class="btn btn-primary"
+ onclick="openAddStudent()">
+
+ <i data-lucide="plus"></i>
+
+ Add Student
+
+ </button>
+
+ </div>
+
+ <div class="stats">
+
+ ${statCard(
+ "graduation-cap",
+ totalStudents,
+ "Total Students"
+ )}
+
+ ${statCard(
+ "users",
+ totalLecturers,
+ "Total Lecturers"
+ )}
+
+ ${statCard(
+ "book-open",
+ totalCourses,
+ "Total Courses"
+ )}
+
+ ${statCard(
+ "wallet",
+ "₹48.6L",
+ "Fees Collected"
+ )}
+
+ ${statCard(
+ "megaphone",
+ totalNotices,
+ "Active Notices"
+ )}
+
+ </div>
+
+ <div class="dashboard-grid">
+
+ <div class="card">
+
+ <div class="card-head">
+
+ <h2>Student Enrollment</h2>
+
+ <select
+ class="filter"
+ onchange="changeChart(this.value)">
+
+ <option>2026</option>
+ <option>2025</option>
+ <option>2024</option>
+
+ </select>
+
+ </div>
+
+ <div class="chart">
+
+ <canvas id="enrollmentChart"></canvas>
+
+ </div>
+
+ </div>
+
+ <div class="card">
+
+ <div class="card-head">
+
+ <h2>Students by Department</h2>
+
+ </div>
+
+ <div class="chart">
+
+ <canvas id="departmentChart"></canvas>
+
+ </div>
+
+ </div>
+
+ </div>
+
+ <div class="card">
+
+ <div class="card-head">
+
+ <h2>Recent Students</h2>
+
+ <button
+ class="btn btn-light"
+ onclick="openPage('students')">
+
+ View Full Database
+
+ </button>
+
+ </div>
+
+ <div class="table-container">
+
+ <table>
+
+ <thead>
+
+ <tr>
+
+ <th>Student</th>
+ <th>USN</th>
+ <th>Department</th>
+ <th>Year</th>
+ <th>Attendance</th>
+ <th>Fees</th>
+ <th>Status</th>
+ <th>Action</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody>
+
+ ${db.students.map(s=>`
+
+ <tr>
+
+ <td>
+
+ <div class="student">
+
+ <div class="student-avatar">
+ ${initials(s.name)}
+ </div>
+
+ <div class="student-name">
+
+ <strong>
+ ${escapeHTML(s.name)}
+ </strong>
+
+ <small>
+ ${escapeHTML(s.email)}
+ </small>
+
+ </div>
+
+ </div>
+
+ </td>
+
+ <td>${s.usn}</td>
+
+ <td>${s.dept}</td>
+
+ <td>${s.year}</td>
+
+ <td>
+
+ <span class="badge ${
+ s.attendance>=85
+ ?"active-badge"
+ :"pending"
+ }">
+
+ ${s.attendance}%
+
+ </span>
+
+ </td>
+
+ <td>
+
+ ${feeBadge(s)}
+
+ </td>
+
+ <td>
+
+ <span class="badge active-badge">
+ ${s.status}
+ </span>
+
+ </td>
+
+ <td>
+
+ <button
+ class="action"
+ onclick="viewStudent(${s.id})">
+
+ <i data-lucide="eye"></i>
+
+ </button>
+
+ </td>
+
+ </tr>
+
+ `).join("")}
+
+ </tbody>
+
+ </table>
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+function statCard(icon,value,label){
+
+ return`
+
+ <div class="stat">
+
+ <div class="stat-icon">
+
+ <i data-lucide="${icon}"></i>
+
+ </div>
+
+ <h2>${value}</h2>
+
+ <p>${label}</p>
+
+ </div>
+
+ `;
+
+}
+
+/* =========================================================
+   STUDENT DASHBOARD
+========================================================= */
+
+function studentDashboard(){
+
+ const s=user;
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>Welcome, ${escapeHTML(s.name)}</h1>
+
+ <p>
+ Student Management Portal
+ </p>
+
+ </div>
+
+ </div>
+
+ <div class="stats">
+
+ ${statCard(
+ "graduation-cap",
+ s.usn,
+ "USN"
+ )}
+
+ ${statCard(
+ "building-2",
+ s.dept,
+ "Department"
+ )}
+
+ ${statCard(
+ "calendar",
+ s.year,
+ "Academic Year"
+ )}
+
+ ${statCard(
+ "clipboard-check",
+ s.attendance+"%",
+ "Attendance"
+ )}
+
+ ${statCard(
+ "wallet",
+ "₹"+(s.totalFee-s.paidFee).toLocaleString(),
+ "Pending Fees"
+ )}
+
+ </div>
+
+ <div class="dashboard-grid">
+
+ <div class="card">
+
+ <h2>My Profile</h2>
+
+ <div class="info-row">
+ <strong>Name</strong>
+ <span>${escapeHTML(s.name)}</span>
+ </div>
+
+ <div class="info-row">
+ <strong>USN</strong>
+ <span>${s.usn}</span>
+ </div>
+
+ <div class="info-row">
+ <strong>Department</strong>
+ <span>${s.dept}</span>
+ </div>
+
+ <div class="info-row">
+ <strong>Year</strong>
+ <span>${s.year}</span>
+ </div>
+
+ <div class="info-row">
+ <strong>Email</strong>
+ <span>${s.email}</span>
+ </div>
+
+ <div class="info-row">
+ <strong>Phone</strong>
+ <span>${s.phone}</span>
+ </div>
+
+ </div>
+
+ <div class="card">
+
+ <h2>Attendance</h2>
+
+ <br>
+
+ <div class="progress">
+
+ <i style="width:${s.attendance}%"></i>
+
+ </div>
+
+ <br>
+
+ <p>
+ Current attendance:
+ <b>${s.attendance}%</b>
+ </p>
+
+ <br>
+
+ <button
+ class="btn btn-primary"
+ onclick="openPage('myAttendance')">
+
+ View Attendance
+
+ </button>
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+/* =========================================================
+   STUDENTS PAGE
+========================================================= */
+
+function students(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>Student Management</h1>
+
+ <p>
+ Complete student database
+ </p>
+
+ </div>
+
+ <button
+ class="btn btn-primary"
+ onclick="openAddStudent()">
+
+ <i data-lucide="plus"></i>
+
+ Add Student
+
+ </button>
+
+ </div>
+
+ <div class="stats">
+
+ ${statCard(
+ "users",
+ db.students.length,
+ "Total Students"
+ )}
+
+ ${statCard(
+ "check-circle",
+ db.students.filter(s=>s.status==="Active").length,
+ "Active Students"
+ )}
+
+ ${statCard(
+ "user-check",
+ db.students.filter(s=>s.gender==="Male").length,
+ "Male Students"
+ )}
+
+ ${statCard(
+ "user-round",
+ db.students.filter(s=>s.gender==="Female").length,
+ "Female Students"
+ )}
+
+ <div class="stat">
+
+ <div class="stat-icon">
+
+ <i data-lucide="search"></i>
+
+ </div>
+
+ <h2 id="filteredCount">
+ ${db.students.length}
+ </h2>
+
+ <p>Showing</p>
+
+ </div>
+
+ </div>
+
+ <div class="card">
+
+ <div class="toolbar">
+
+ <div class="search">
+
+ <i data-lucide="search"></i>
+
+ <input
+ id="studentSearch"
+ placeholder="Search name, USN, email, phone..."
+ oninput="renderStudentTable()">
+
+ </div>
+
+ <select
+ class="filter"
+ id="departmentFilter"
+ onchange="renderStudentTable()">
+
+ <option value="">All Departments</option>
+ <option>CSE</option>
+ <option>ISE</option>
+ <option>ECE</option>
+ <option>ME</option>
+ <option>CIVIL</option>
+
+ </select>
+
+ <select
+ class="filter"
+ id="yearFilter"
+ onchange="renderStudentTable()">
+
+ <option value="">All Years</option>
+ <option>1st Year</option>
+ <option>2nd Year</option>
+ <option>3rd Year</option>
+ <option>4th Year</option>
+
+ </select>
+
+ <select
+ class="filter"
+ id="genderFilter"
+ onchange="renderStudentTable()">
+
+ <option value="">All Gender</option>
+ <option>Male</option>
+ <option>Female</option>
+
+ </select>
+
+ <button
+ class="btn btn-light"
+ onclick="exportStudents()">
+
+ <i data-lucide="download"></i>
+
+ Export CSV
+
+ </button>
+
+ </div>
+
+ <div class="table-container">
+
+ <table>
+
+ <thead>
+
+ <tr>
+
+ <th>Student</th>
+ <th>USN</th>
+ <th>Gender</th>
+ <th>Department</th>
+ <th>Year</th>
+ <th>Phone</th>
+ <th>Email</th>
+ <th>Attendance</th>
+ <th>Fees</th>
+ <th>Status</th>
+ <th>Action</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody id="studentTable"></tbody>
+
+ </table>
+
+ </div>
+
+ <div class="pagination">
+
+ <span id="resultText">
+ Showing students
+ </span>
+
+ <div
+ class="pages"
+ id="pagination">
+ </div>
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+function getFilteredStudents(){
+
+ const search=
+ document.getElementById("studentSearch")
+ ?.value.toLowerCase()||"";
+
+ const dept=
+ document.getElementById("departmentFilter")
+ ?.value||"";
+
+ const year=
+ document.getElementById("yearFilter")
+ ?.value||"";
+
+ const gender=
+ document.getElementById("genderFilter")
+ ?.value||"";
+
+ return db.students.filter(s=>{
+
+  const text=`
+
+  ${s.name}
+  ${s.usn}
+  ${s.email}
+  ${s.phone}
+  ${s.dept}
+  ${s.year}
+  ${s.gender}
+
+  `.toLowerCase();
+
+  return text.includes(search)&&
+   (!dept||s.dept===dept)&&
+   (!year||s.year===year)&&
+   (!gender||s.gender===gender);
+
+ });
+
+}
+
+function renderStudentTable(){
+
+ const filtered=getFilteredStudents();
+
+ const totalPages=
+ Math.max(
+  1,
+  Math.ceil(filtered.length/rowsPerPage)
+ );
+
+ if(currentStudentPage>totalPages)
+ currentStudentPage=1;
+
+ const start=
+ (currentStudentPage-1)*rowsPerPage;
+
+ const data=
+ filtered.slice(start,start+rowsPerPage);
+
+ const table=
+ document.getElementById("studentTable");
+
+ if(!table)return;
+
+ table.innerHTML=
+ data.map(studentRow).join("");
+
+ document.getElementById("filteredCount")
+ .innerText=filtered.length;
+
+ document.getElementById("resultText")
+ .innerText=
+ `Showing ${filtered.length} student${filtered.length!==1?"s":""}`;
+
+ renderPagination(totalPages);
+
+ lucide.createIcons();
+
+}
+
+function studentRow(s){
+
+ return`
+
+ <tr>
+
+ <td>
+
+ <div class="student">
+
+ <div class="student-avatar">
+ ${initials(s.name)}
+ </div>
+
+ <div class="student-name">
+
+ <strong>${escapeHTML(s.name)}</strong>
+
+ <small>${escapeHTML(s.email)}</small>
+
+ </div>
+
+ </div>
+
+ </td>
+
+ <td><b>${s.usn}</b></td>
+
+ <td>${s.gender}</td>
+
+ <td>
+ <span class="badge blue">${s.dept}</span>
+ </td>
+
+ <td>${s.year}</td>
+
+ <td>${s.phone}</td>
+
+ <td>${s.email}</td>
+
+ <td>
+
+ <span class="badge ${
+ s.attendance>=85
+ ?"active-badge"
+ :"pending"
+ }">
+
+ ${s.attendance}%
+
+ </span>
+
+ </td>
+
+ <td>${feeBadge(s)}</td>
+
+ <td>
+
+ <span class="badge ${
+ s.status==="Active"
+ ?"active-badge"
+ :"inactive"
+ }">
+
+ ${s.status}
+
+ </span>
+
+ </td>
+
+ <td>
+
+ <button
+ class="action"
+ onclick="viewStudent(${s.id})">
+
+ <i data-lucide="eye"></i>
+
+ </button>
+
+ </td>
+
+ </tr>
+
+ `;
+
+}
+
+function renderPagination(totalPages){
+
+ const box=
+ document.getElementById("pagination");
+
+ if(!box)return;
+
+ box.innerHTML="";
+
+ for(let i=1;i<=totalPages;i++){
+
+  const button=
+  document.createElement("button");
+
+  button.innerText=i;
+
+  if(i===currentStudentPage)
+  button.classList.add("active");
+
+  button.onclick=()=>{
+
+   currentStudentPage=i;
+
+   renderStudentTable();
+
+  };
+
+  box.appendChild(button);
+
+ }
+
+}
+
+function feeBadge(s){
+
+ const pending=
+ s.totalFee-s.paidFee;
+
+ if(pending===0){
+
+  return`
+  <span class="badge active-badge">
+  Paid
+  </span>
+  `;
+
+ }
+
+ return`
+ <span class="badge pending">
+ ₹${pending.toLocaleString()}
+ </span>
+ `;
+
+}
+
+/* =========================================================
+   ADD STUDENT
+========================================================= */
+
+function openAddStudent(){
+
+ showModal(`
+
+ <div class="modal-head">
+
+ <h2>Add New Student</h2>
+
+ <button
+ class="close"
+ onclick="closeModal()">
+
+ ×
+
+ </button>
+
+ </div>
+
+ <form onsubmit="saveNewStudent(event)">
+
+ <div class="form-grid">
+
+ <div class="field">
+
+ <label>Full Name</label>
+
+ <input id="newName" required>
+
+ </div>
+
+ <div class="field">
+
+ <label>USN</label>
+
+ <input
+ id="newUsn"
+ placeholder="1BC23CS001"
+ required>
+
+ </div>
+
+ <div class="field">
+
+ <label>Gender</label>
+
+ <select id="newGender">
+
+ <option>Male</option>
+ <option>Female</option>
+
+ </select>
+
+ </div>
+
+ <div class="field">
+
+ <label>Department</label>
+
+ <select id="newDept">
+
+ <option>CSE</option>
+ <option>ISE</option>
+ <option>ECE</option>
+ <option>ME</option>
+ <option>CIVIL</option>
+
+ </select>
+
+ </div>
+
+ <div class="field">
+
+ <label>Year</label>
+
+ <select id="newYear">
+
+ <option>1st Year</option>
+ <option>2nd Year</option>
+ <option>3rd Year</option>
+ <option>4th Year</option>
+
+ </select>
+
+ </div>
+
+ <div class="field">
+
+ <label>Phone</label>
+
+ <input id="newPhone" required>
+
+ </div>
+
+ <div class="field">
+
+ <label>Email</label>
+
+ <input
+ id="newEmail"
+ type="email"
+ required>
+
+ </div>
+
+ <div class="field">
+
+ <label>Blood Group</label>
+
+ <select id="newBlood">
+
+ <option>A+</option>
+ <option>A-</option>
+ <option>B+</option>
+ <option>B-</option>
+ <option>AB+</option>
+ <option>AB-</option>
+ <option>O+</option>
+ <option>O-</option>
+
+ </select>
+
+ </div>
+
+ <div class="field">
+
+ <label>Parent / Guardian</label>
+
+ <input id="newParent">
+
+ </div>
+
+ <div class="field">
+
+ <label>Parent Phone</label>
+
+ <input id="newParentPhone">
+
+ </div>
+
+ </div>
+
+ <div class="form-actions">
+
+ <button
+ type="button"
+ class="btn btn-light"
+ onclick="closeModal()">
+
+ Cancel
+
+ </button>
+
+ <button
+ class="btn btn-primary">
+
+ Save Student
+
+ </button>
+
+ </div>
+
+ </form>
+
+ `);
+
+}
+
+function saveNewStudent(e){
+
+ e.preventDefault();
+
+ const student={
+
+  id:Date.now(),
+
+  name:document.getElementById("newName").value,
+
+  usn:document.getElementById("newUsn").value,
+
+  gender:document.getElementById("newGender").value,
+
+  dept:document.getElementById("newDept").value,
+
+  year:document.getElementById("newYear").value,
+
+  phone:document.getElementById("newPhone").value,
+
+  email:document.getElementById("newEmail").value,
+
+  blood:document.getElementById("newBlood").value,
+
+  parent:document.getElementById("newParent").value,
+
+  parentPhone:document.getElementById("newParentPhone").value,
+
+  attendance:100,
+
+  totalFee:85000,
+
+  paidFee:0,
+
+  face:null,
+
+  status:"Active"
+
+ };
+
+ db.students.push(student);
+
+ saveDB();
+
+ closeModal();
+
+ render();
+
+ showToast("Student added successfully ✓");
+
+}
+
+/* =========================================================
+   VIEW STUDENT
+========================================================= */
+
+function viewStudent(id){
+
+ const s=
+ db.students.find(x=>x.id===id);
+
+ if(!s)return;
+
+ const pending=
+ s.totalFee-s.paidFee;
+
+ showModal(`
+
+ <div class="modal-head">
+
+ <h2>Complete Student Profile</h2>
+
+ <button
+ class="close"
+ onclick="closeModal()">
+
+ ×
+
+ </button>
+
+ </div>
+
+ <div class="detail-header">
+
+ <div class="big-avatar">
+ ${initials(s.name)}
+ </div>
+
+ <div>
+
+ <h2>${escapeHTML(s.name)}</h2>
+
+ <p>
+ ${s.usn} · ${s.dept} · ${s.year}
+ </p>
+
+ <br>
+
+ <span class="badge active-badge">
+ ${s.status}
+ </span>
+
+ </div>
+
+ </div>
+
+ <div class="detail-grid">
+
+ ${detailBox("Full Name",s.name)}
+ ${detailBox("USN",s.usn)}
+ ${detailBox("Gender",s.gender)}
+ ${detailBox("Department",s.dept)}
+ ${detailBox("Academic Year",s.year)}
+ ${detailBox("Blood Group",s.blood)}
+ ${detailBox("Phone",s.phone)}
+ ${detailBox("Email",s.email)}
+ ${detailBox("Parent / Guardian",s.parent)}
+ ${detailBox("Parent Phone",s.parentPhone)}
+ ${detailBox("Attendance",s.attendance+"%")}
+ ${detailBox(
+  "Fee Status",
+  "₹"+s.paidFee.toLocaleString()+
+  " paid"+
+  (pending?
+   " / ₹"+pending.toLocaleString()+" pending":
+   " / Fully Paid")
+ )}
+
+ </div>
+
+ <div
+ style="
+ margin-top:20px;
+ display:flex;
+ justify-content:flex-end;
+ gap:10px;
+ flex-wrap:wrap">
+
+ <button
+ class="btn btn-light"
+ onclick="printStudent(${s.id})">
+
+ <i data-lucide="printer"></i>
+
+ Print Profile
+
+ </button>
+
+ ${
+ role==="admin"
+ ?`
+
+ <button
+ class="btn btn-primary"
+ onclick="registerFace(${s.id})">
+
+ <i data-lucide="scan-face"></i>
+
+ Register Face
+
+ </button>
+
+ <button
+ class="btn btn-red"
+ onclick="deleteStudent(${s.id})">
+
+ <i data-lucide="trash-2"></i>
+
+ Delete
+
+ </button>
+
+ `
+ :""
+ }
+
+ </div>
+
+ `);
+
+ lucide.createIcons();
+
+}
+
+function detailBox(label,value){
+
+ return`
+
+ <div class="detail-box">
+
+ <label>${label}</label>
+
+ <strong>
+ ${escapeHTML(value)}
+ </strong>
+
+ </div>
+
+ `;
+
+}
+
+function deleteStudent(id){
+
+ if(!confirm(
+ "Are you sure you want to delete this student?"
+ ))return;
+
+ db.students=
+ db.students.filter(s=>s.id!==id);
+
+ saveDB();
+
+ closeModal();
+
+ render();
+
+ showToast("Student deleted");
+
+}
+
+/* =========================================================
+   PRINT
+========================================================= */
+
+function printStudent(id){
+
+ const s=
+ db.students.find(x=>x.id===id);
+
+ if(!s)return;
+
+ const w=window.open("","_blank");
+
+ w.document.write(`
+
+ <html>
+
+ <head>
+
+ <title>${escapeHTML(s.name)} - BCET</title>
+
+ <style>
+
+ body{
+  font-family:Arial;
+  padding:40px;
+ }
+
+ h1{
+  color:#176db0;
+ }
+
+ table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+ }
+
+ td{
+  border:1px solid #ddd;
+  padding:12px;
+ }
+
+ td:first-child{
+  font-weight:bold;
+  background:#f5f7fa;
+ }
+
+ </style>
+
+ </head>
+
+ <body>
+
+ <h1>
+ Bangalore College of Engineering & Technology
+ </h1>
+
+ <h2>Student Profile</h2>
+
+ <table>
+
+ <tr><td>Name</td><td>${escapeHTML(s.name)}</td></tr>
+ <tr><td>USN</td><td>${s.usn}</td></tr>
+ <tr><td>Gender</td><td>${s.gender}</td></tr>
+ <tr><td>Department</td><td>${s.dept}</td></tr>
+ <tr><td>Year</td><td>${s.year}</td></tr>
+ <tr><td>Phone</td><td>${s.phone}</td></tr>
+ <tr><td>Email</td><td>${s.email}</td></tr>
+ <tr><td>Blood Group</td><td>${s.blood}</td></tr>
+ <tr><td>Parent</td><td>${s.parent}</td></tr>
+ <tr><td>Parent Phone</td><td>${s.parentPhone}</td></tr>
+ <tr><td>Attendance</td><td>${s.attendance}%</td></tr>
+ <tr><td>Total Fee</td><td>₹${s.totalFee}</td></tr>
+ <tr><td>Paid Fee</td><td>₹${s.paidFee}</td></tr>
+ <tr><td>Pending Fee</td><td>₹${s.totalFee-s.paidFee}</td></tr>
+ <tr><td>Status</td><td>${s.status}</td></tr>
+
+ </table>
+
+ <script>
+ window.print();
+ <\/script>
+
+ </body>
+
+ </html>
+
+ `);
+
+ w.document.close();
+
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
+function exportStudents(){
+
+ const headers=[
+  "Name",
+  "USN",
+  "Gender",
+  "Department",
+  "Year",
+  "Phone",
+  "Email",
+  "Blood Group",
+  "Parent",
+  "Parent Phone",
+  "Attendance",
+  "Total Fee",
+  "Paid Fee",
+  "Pending Fee",
+  "Status"
+ ];
+
+ const rows=db.students.map(s=>[
+
+  s.name,
+  s.usn,
+  s.gender,
+  s.dept,
+  s.year,
+  s.phone,
+  s.email,
+  s.blood,
+  s.parent,
+  s.parentPhone,
+  s.attendance+"%",
+  s.totalFee,
+  s.paidFee,
+  s.totalFee-s.paidFee,
+  s.status
+
+ ]);
+
+ const csv=[
+  headers,
+  ...rows
+ ]
+ .map(row=>
+  row.map(v=>
+   `"${String(v).replaceAll('"','""')}"`
+  ).join(",")
+ )
+ .join("\n");
+
+ const blob=
+ new Blob([csv],{
+  type:"text/csv;charset=utf-8;"
+ });
+
+ const url=
+ URL.createObjectURL(blob);
+
+ const a=
+ document.createElement("a");
+
+ a.href=url;
+
+ a.download="BCET_All_Students.csv";
+
+ a.click();
+
+ URL.revokeObjectURL(url);
+
+ showToast("Student database exported ✓");
+
+}
+
+/* =========================================================
+   LECTURERS
+========================================================= */
+
+function lecturers(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>Lecturers</h1>
+
+ <p>
+ Faculty information and attendance
+ </p>
+
+ </div>
+
+ </div>
+
+ <div class="card">
+
+ <div class="table-container">
+
+ <table>
+
+ <thead>
+
+ <tr>
+
+ <th>Lecturer</th>
+ <th>Employee ID</th>
+ <th>Department</th>
+ <th>Designation</th>
+ <th>Email</th>
+ <th>Phone</th>
+ <th>Today</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody>
+
+ ${db.lecturers.map(l=>`
+
+ <tr>
+
+ <td>
+ <strong>${escapeHTML(l.name)}</strong>
+ </td>
+
+ <td>${l.employee}</td>
+
+ <td>${l.dept}</td>
+
+ <td>${l.designation}</td>
+
+ <td>${l.email}</td>
+
+ <td>${l.phone}</td>
+
+ <td>
+
+ <span class="badge ${
+ l.attendance==="Present"
+ ?"active-badge"
+ :"inactive"
+ }">
+
+ ${l.attendance}
+
+ </span>
+
+ </td>
+
+ </tr>
+
+ `).join("")}
+
+ </tbody>
+
+ </table>
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+/* =========================================================
+   STUDENT ATTENDANCE
+========================================================= */
+
+function studentAttendance(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>Student Attendance</h1>
+
+ <p>
+ Manage student attendance
+ </p>
+
+ </div>
+
+ <button
+ class="btn btn-primary"
+ onclick="openPage('face')">
+
+ <i data-lucide="scan-face"></i>
+
+ Face Attendance
+
+ </button>
+
+ </div>
+
+ <div class="card">
+
+ <div class="toolbar">
+
+ <input
+ type="date"
+ id="attendanceDate"
+ class="filter"
+ value="${today()}">
+
+ <select
+ id="subject"
+ class="filter">
+
+ <option>Data Structures</option>
+ <option>DBMS</option>
+ <option>Operating Systems</option>
+ <option>Computer Networks</option>
+ <option>Artificial Intelligence</option>
+ <option>Web Technology</option>
+
+ </select>
+
+ </div>
+
+ <div class="table-container">
+
+ <table>
+
+ <thead>
+
+ <tr>
+
+ <th>Student</th>
+ <th>USN</th>
+ <th>Department</th>
+ <th>Attendance</th>
+ <th>Today</th>
+ <th>Action</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody>
+
+ ${db.students.map(s=>`
+
+ <tr>
+
+ <td>
+ <strong>${escapeHTML(s.name)}</strong>
+ </td>
+
+ <td>${s.usn}</td>
+
+ <td>${s.dept}</td>
+
+ <td>
+
+ <b>${s.attendance}%</b>
+
+ <div class="progress">
+
+ <i style="width:${s.attendance}%"></i>
+
+ </div>
+
+ </td>
+
+ <td>
+
+ <span class="badge ${
+ getStudentTodayStatus(s.id)==="Present"
+ ?"active-badge"
+ :getStudentTodayStatus(s.id)==="Absent"
+ ?"inactive"
+ :"pending"
+ }">
+
+ ${getStudentTodayStatus(s.id)}
+
+ </span>
+
+ </td>
+
+ <td>
+
+ <div class="actions">
+
+ <button
+ class="btn btn-green"
+ onclick="markStudentAttendance(${s.id},'Present')">
+
+ Present
+
+ </button>
+
+ <button
+ class="btn btn-red"
+ onclick="markStudentAttendance(${s.id},'Absent')">
+
+ Absent
+
+ </button>
+
+ </div>
+
+ </td>
+
+ </tr>
+
+ `).join("")}
+
+ </tbody>
+
+ </table>
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+function attendanceKey(id){
+
+ return today()+"_"+id;
+
+}
+
+function getStudentTodayStatus(id){
+
+ return db.attendance[
+ attendanceKey(id)
+ ]||"Not Marked";
+
+}
+
+function markStudentAttendance(id,status){
+
+ const student=
+ db.students.find(s=>s.id===id);
+
+ if(!student)return;
+
+ db.attendance[
+ attendanceKey(id)
+ ]=status;
+
+ if(status==="Present"){
+
+  student.attendance=
+  Math.min(
+   100,
+   Number(student.attendance)+.1
+  );
+
+ }
+
+ saveDB();
+
+ render();
+
+ showToast(
+  status+" attendance recorded"
+ );
+
+}
+
+/* =========================================================
+   LECTURER ATTENDANCE
+========================================================= */
+
+function lecturerAttendance(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>Lecturer Attendance</h1>
+
+ <p>
+ Faculty attendance management
+ </p>
+
+ </div>
+
+ </div>
+
+ <div class="card">
+
+ <div class="table-container">
+
+ <table>
+
+ <thead>
+
+ <tr>
+
+ <th>Lecturer</th>
+ <th>Employee ID</th>
+ <th>Department</th>
+ <th>Today</th>
+ <th>Action</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody>
+
+ ${db.lecturers.map(l=>`
+
+ <tr>
+
+ <td>
+ <strong>${escapeHTML(l.name)}</strong>
+ </td>
+
+ <td>${l.employee}</td>
+
+ <td>${l.dept}</td>
+
+ <td>
+
+ <span class="badge ${
+ l.attendance==="Present"
+ ?"active-badge"
+ :"inactive"
+ }">
+
+ ${l.attendance}
+
+ </span>
+
+ </td>
+
+ <td>
+
+ <div class="actions">
+
+ <button
+ class="btn btn-green"
+ onclick="markLecturerAttendance(${l.id},'Present')">
+
+ Present
+
+ </button>
+
+ <button
+ class="btn btn-red"
+ onclick="markLecturerAttendance(${l.id},'Absent')">
+
+ Absent
+
+ </button>
+
+ </div>
+
+ </td>
+
+ </tr>
+
+ `).join("")}
+
+ </tbody>
+
+ </table>
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+function markLecturerAttendance(id,status){
+
+ const lecturer=
+ db.lecturers.find(l=>l.id===id);
+
+ if(!lecturer)return;
+
+ lecturer.attendance=status;
+
+ db.lecturerAttendance[
+ today()+"_"+id
+ ]=status;
+
+ saveDB();
+
+ render();
+
+ showToast("Lecturer attendance updated");
+
+}
+
+/* =========================================================
+   MY ATTENDANCE
+========================================================= */
+
+function myAttendance(){
+
+ const s=user;
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>My Attendance</h1>
+
+ <p>
+ ${escapeHTML(s.name)} · ${s.usn}
+ </p>
+
+ </div>
+
+ </div>
+
+ <div class="stats">
+
+ ${statCard(
+ "clipboard-check",
+ s.attendance+"%",
+ "Overall Attendance"
+ )}
+
+ ${statCard(
+ "check-circle",
+ Object.values(db.attendance)
+ .filter(x=>x==="Present").length,
+ "Present Records"
+ )}
+
+ ${statCard(
+ "calendar-check",
+ getStudentTodayStatus(s.id),
+ "Today's Status"
+ )}
+
+ </div>
+
+ <div class="card">
+
+ <h2>Attendance Progress</h2>
+
+ <br>
+
+ <div class="progress">
+
+ <i style="width:${s.attendance}%"></i>
+
+ </div>
+
+ <br>
+
+ <p>
+ Current attendance:
+ <b>${s.attendance}%</b>
+ </p>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+/* =========================================================
+   FACE RECOGNITION
+========================================================= */
+
+function faceRecognition(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>🤖 AI Face Recognition Attendance</h1>
+
+ <p>
+ Automatic student identification
+ and attendance
+ </p>
+
+ </div>
+
+ </div>
+
+ <div class="dashboard-grid">
+
+ <div class="card">
+
+ <h2>Live Camera</h2>
+
+ <br>
+
+ <div class="camera">
+
+ <video
+ id="camera"
+ autoplay
+ muted
+ playsinline>
+ </video>
+
+ </div>
+
+ <div
+ id="faceStatus"
+ class="face-status">
+
+ Camera stopped.
+
+ </div>
+
+ <div
+ class="actions"
+ style="margin-top:12px">
+
+ <button
+ class="btn btn-primary"
+ onclick="startCamera()">
+
+ ▶ Start Camera
+
+ </button>
+
+ <button
+ class="btn btn-light"
+ onclick="recognizeFace()">
+
+ 🔎 Recognize
+
+ </button>
+
+ <button
+ class="btn btn-red"
+ onclick="stopCamera()">
+
+ ■ Stop
+
+ </button>
+
+ </div>
+
+ </div>
+
+ <div class="card">
+
+ <h2>Registered Students</h2>
+
+ <p style="color:var(--muted);margin:8px 0 15px">
+
+ Register a clear front-facing photograph
+ before recognition.
+
+ </p>
+
+ <div class="table-container">
+
+ <table>
+
+ <thead>
+
+ <tr>
+
+ <th>Student</th>
+ <th>USN</th>
+ <th>Face</th>
+ <th>Action</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody>
+
+ ${db.students.map(s=>`
+
+ <tr>
+
+ <td>${escapeHTML(s.name)}</td>
+
+ <td>${s.usn}</td>
+
+ <td>
+
+ <span class="badge ${
+ s.face
+ ?"active-badge"
+ :"pending"
+ }">
+
+ ${s.face?"Ready":"Missing"}
+
+ </span>
+
+ </td>
+
+ <td>
+
+ <button
+ class="btn btn-light"
+ onclick="registerFace(${s.id})">
+
+ Register
+
+ </button>
+
+ </td>
+
+ </tr>
+
+ `).join("")}
+
+ </tbody>
+
+ </table>
+
+ </div>
+
+ </div>
+
+ </div>
+
+ <div class="card">
+
+ <h3>Automatic Attendance Workflow</h3>
+
+ <br>
+
+ <p>1. Register the student's face.</p>
+
+ <p>2. Start the webcam.</p>
+
+ <p>3. AI detects the face.</p>
+
+ <p>4. Face descriptor is compared with registered students.</p>
+
+ <p>5. Matching student is identified.</p>
+
+ <p>6. Attendance can be marked automatically.</p>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+async function loadFaceModels(){
+
+ if(modelsLoaded)return;
+
+ setFaceStatus(
+  "Loading AI face-recognition models..."
+ );
+
+ const MODEL_URL=
+ "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.3/model/";
+
+ await Promise.all([
+
+  faceapi.nets.tinyFaceDetector
+  .loadFromUri(MODEL_URL),
+
+  faceapi.nets.faceLandmark68Net
+  .loadFromUri(MODEL_URL),
+
+  faceapi.nets.faceRecognitionNet
+  .loadFromUri(MODEL_URL)
+
+ ]);
+
+ modelsLoaded=true;
+
+ setFaceStatus(
+  "AI models loaded successfully."
+ );
+
+}
+
+async function startCamera(){
+
+ try{
+
+  await loadFaceModels();
+
+  cameraStream=
+  await navigator.mediaDevices.getUserMedia({
+
+   video:{
+    facingMode:"user",
+    width:{ideal:640},
+    height:{ideal:480}
+   },
+
+   audio:false
+
+  });
+
+  const video=
+  document.getElementById("camera");
+
+  if(!video)return;
+
+  video.srcObject=cameraStream;
+
+  setFaceStatus(
+   "Camera running. Face the camera."
+  );
+
+  clearInterval(recognitionTimer);
+
+  recognitionTimer=
+  setInterval(()=>{
+
+   recognizeFace(true);
+
+  },4000);
+
+ }
+
+ catch(error){
+
+  setFaceStatus(
+   "Camera error: "+error.message
+  );
+
+ }
+
+}
+
+function stopCamera(){
+
+ if(recognitionTimer){
+
+  clearInterval(
+   recognitionTimer
+  );
+
+  recognitionTimer=null;
+
+ }
+
+ if(cameraStream){
+
+  cameraStream
+  .getTracks()
+  .forEach(track=>track.stop());
+
+  cameraStream=null;
+
+ }
+
+}
+
+async function recognizeFace(silent=false){
+
+ const video=
+ document.getElementById("camera");
+
+ if(!video||!video.srcObject){
+
+  if(!silent)
+  setFaceStatus(
+   "Start the camera first."
+  );
+
+  return;
+
+ }
+
+ try{
+
+  await loadFaceModels();
+
+  const detection=
+
+  await faceapi
+  .detectSingleFace(
+   video,
+   new faceapi.TinyFaceDetectorOptions({
+    inputSize:320,
+    scoreThreshold:.5
+   })
+  )
+  .withFaceLandmarks()
+  .withFaceDescriptor();
+
+  if(!detection){
+
+   if(!silent)
+   setFaceStatus(
+    "No face detected."
+   );
+
+   return;
+
+  }
+
+  const registered=
+  db.students.filter(
+   s=>Array.isArray(s.face)&&
+   s.face.length===128
+  );
+
+  if(!registered.length){
+
+   setFaceStatus(
+    "No registered faces found."
+   );
+
+   return;
+
+  }
+
+  const labeled=
+  registered.map(s=>
+
+   new faceapi.LabeledFaceDescriptors(
+    s.usn,
+    [
+     new Float32Array(s.face)
+    ]
+   )
+
+  );
+
+  const matcher=
+  new faceapi.FaceMatcher(
+   labeled,
+   .52
+  );
+
+  const result=
+  matcher.findBestMatch(
+   detection.descriptor
+  );
+
+  if(result.label==="unknown"){
+
+   setFaceStatus(
+    "Face detected but no student matched."
+   );
+
+   return;
+
+  }
+
+  const student=
+  db.students.find(
+   s=>s.usn===result.label
+  );
+
+  if(!student)return;
+
+  const similarity=
+  Math.max(
+   0,
+   Math.round((1-result.distance)*100)
+  );
+
+  setFaceStatus(
+
+   "Recognized: "+
+   student.name+
+   " · Similarity: "+
+   similarity+"%"
+
+  );
+
+  if(!silent){
+
+   if(confirm(
+    "Recognized "+student.name+
+    ". Mark attendance PRESENT?"
+   )){
+
+    markStudentAttendance(
+     student.id,
+     "Present"
+    );
+
+   }
+
+  }
+
+ }
+
+ catch(error){
+
+  console.error(error);
+
+  setFaceStatus(
+   "Recognition error: "+
+   error.message
+  );
+
+ }
+
+}
+
+function setFaceStatus(message){
+
+ const element=
+ document.getElementById("faceStatus");
+
+ if(element)
+ element.innerText=message;
+
+}
+
+/* =========================================================
+   REGISTER FACE
+========================================================= */
+
+function registerFace(id){
+
+ const student=
+ db.students.find(s=>s.id===id);
+
+ if(!student)return;
+
+ showModal(`
+
+ <div class="modal-head">
+
+ <h2>Register Face</h2>
+
+ <button
+ class="close"
+ onclick="closeModal()">
+
+ ×
+
+ </button>
+
+ </div>
+
+ <h3>
+ ${escapeHTML(student.name)}
+ </h3>
+
+ <p style="color:var(--muted);margin:5px 0 15px">
+ USN: ${student.usn}
+ </p>
+
+ <div class="field">
+
+ <label>Student Photograph</label>
+
+ <input
+ id="faceFile"
+ type="file"
+ accept="image/png,image/jpeg">
+
+ </div>
+
+ <img
+ id="facePreview"
+ class="hidden face-preview">
+
+ <div
+ id="faceMessage"
+ class="face-status">
+
+ Select a clear front-facing photo.
+
+ </div>
+
+ <div class="form-actions">
+
+ <button
+ class="btn btn-light"
+ onclick="closeModal()">
+
+ Cancel
+
+ </button>
+
+ <button
+ class="btn btn-primary"
+ onclick="processFace(${id})">
+
+ Register Face
+
+ </button>
+
+ </div>
+
+ `);
+
+ document.getElementById("faceFile")
+ .onchange=e=>{
+
+  const file=e.target.files[0];
+
+  if(!file)return;
+
+  const img=
+  document.getElementById("facePreview");
+
+  img.src=
+  URL.createObjectURL(file);
+
+  img.classList.remove("hidden");
+
+ };
+
+}
+
+async function processFace(id){
+
+ const input=
+ document.getElementById("faceFile");
+
+ const file=input?.files[0];
+
+ if(!file){
+
+  showToast("Select a photograph");
+
+  return;
+
+ }
+
+ const message=
+ document.getElementById("faceMessage");
+
+ message.innerText=
+ "Processing face...";
+
+ try{
+
+  await loadFaceModels();
+
+  const image=
+  await faceapi.bufferToImage(file);
+
+  const detection=
+
+  await faceapi
+  .detectSingleFace(
+   image,
+   new faceapi.TinyFaceDetectorOptions({
+    inputSize:320,
+    scoreThreshold:.5
+   })
+  )
+  .withFaceLandmarks()
+  .withFaceDescriptor();
+
+  if(!detection){
+
+   message.innerText=
+   "No face detected. Use a clear photograph.";
+
+   return;
+
+  }
+
+  const student=
+  db.students.find(s=>s.id===id);
+
+  student.face=
+  Array.from(
+   detection.descriptor
+  );
+
+  saveDB();
+
+  message.innerText=
+  "Face registered successfully.";
+
+  setTimeout(()=>{
+
+   closeModal();
+
+   render();
+
+   showToast("Face registered ✓");
+
+  },700);
+
+ }
+
+ catch(error){
+
+  message.innerText=
+  "Face registration error: "+
+  error.message;
+
+ }
+
+}
+
+/* =========================================================
+   COURSES
+========================================================= */
+
+function courses(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>Courses</h1>
+
+ <p>
+ Academic programs
+ </p>
+
+ </div>
+
+ </div>
+
+ <div class="card">
+
+ <div class="table-container">
+
+ <table>
+
+ <thead>
+
+ <tr>
+
+ <th>Course</th>
+ <th>Code</th>
+ <th>Department</th>
+ <th>Duration</th>
+ <th>Seats</th>
+ <th>HOD</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody>
+
+ ${db.courses.map(c=>`
+
+ <tr>
+
+ <td>
+ <strong>${escapeHTML(c.name)}</strong>
+ </td>
+
+ <td>${c.code}</td>
+
+ <td>${c.dept}</td>
+
+ <td>${c.duration}</td>
+
+ <td>${c.seats}</td>
+
+ <td>${escapeHTML(c.hod)}</td>
+
+ </tr>
+
+ `).join("")}
+
+ </tbody>
+
+ </table>
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+/* =========================================================
+   FEES
+========================================================= */
+
+function fees(){
+
+ const total=
+ db.students.reduce(
+  (sum,s)=>sum+s.totalFee,0
+ );
+
+ const paid=
+ db.students.reduce(
+  (sum,s)=>sum+s.paidFee,0
+ );
+
+ const pending=total-paid;
+
+ const rate=
+ total?
+ Math.round(paid/total*100):
+ 0;
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>Fee Management</h1>
+
+ <p>
+ Student fee payment information
+ </p>
+
+ </div>
+
+ </div>
+
+ <div class="stats">
+
+ ${statCard(
+ "wallet",
+ "₹"+(paid/100000).toFixed(1)+"L",
+ "Total Collected"
+ )}
+
+ ${statCard(
+ "clock",
+ "₹"+(pending/100000).toFixed(1)+"L",
+ "Pending"
+ )}
+
+ ${statCard(
+ "percent",
+ rate+"%",
+ "Collection Rate"
+ )}
+
+ ${statCard(
+ "indian-rupee",
+ "₹"+(total/100000).toFixed(1)+"L",
+ "Total Fees"
+ )}
+
+ ${statCard(
+ "users",
+ db.students.length,
+ "Students"
+ )}
+
+ </div>
+
+ <div class="card">
+
+ <div class="table-container">
+
+ <table>
+
+ <thead>
+
+ <tr>
+
+ <th>Student</th>
+ <th>USN</th>
+ <th>Department</th>
+ <th>Total Fee</th>
+ <th>Paid</th>
+ <th>Pending</th>
+ <th>Status</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody>
+
+ ${db.students.map(s=>{
+
+  const p=s.totalFee-s.paidFee;
+
+  return`
+
+  <tr>
+
+  <td>
+  <strong>${escapeHTML(s.name)}</strong>
+  </td>
+
+  <td>${s.usn}</td>
+
+  <td>${s.dept}</td>
+
+  <td>₹${s.totalFee.toLocaleString()}</td>
+
+  <td>₹${s.paidFee.toLocaleString()}</td>
+
+  <td>₹${p.toLocaleString()}</td>
+
+  <td>
+
+  <span class="badge ${
+   p===0
+   ?"active-badge"
+   :"pending"
+  }">
+
+  ${p===0?"Paid":"Pending"}
+
+  </span>
+
+  </td>
+
+  </tr>
+
+  `;
+
+ }).join("")}
+
+ </tbody>
+
+ </table>
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+/* =========================================================
+   PLACEMENTS
+========================================================= */
+
+function placements(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>Placement Management</h1>
+
+ <p>
+ Recruitment statistics
+ </p>
+
+ </div>
+
+ </div>
+
+ <div class="stats">
+
+ ${statCard("percent","87%","Placement Rate")}
+ ${statCard("indian-rupee","₹8.4L","Average Package")}
+ ${statCard("award","₹28L","Highest Package")}
+ ${statCard("building","54","Recruiters")}
+ ${statCard("users","612","Placed Students")}
+
+ </div>
+
+ <div class="card">
+
+ <div class="table-container">
+
+ <table>
+
+ <thead>
+
+ <tr>
+
+ <th>Company</th>
+ <th>Role</th>
+ <th>Package</th>
+ <th>Openings</th>
+ <th>Students Selected</th>
+ <th>Status</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody>
+
+ <tr>
+ <td><strong>TCS</strong></td>
+ <td>Software Engineer</td>
+ <td>₹7.2 LPA</td>
+ <td>45</td>
+ <td>38</td>
+ <td><span class="badge active-badge">Open</span></td>
+ </tr>
+
+ <tr>
+ <td><strong>Infosys</strong></td>
+ <td>Systems Engineer</td>
+ <td>₹6.5 LPA</td>
+ <td>35</td>
+ <td>31</td>
+ <td><span class="badge active-badge">Open</span></td>
+ </tr>
+
+ <tr>
+ <td><strong>Accenture</strong></td>
+ <td>Associate Engineer</td>
+ <td>₹6.8 LPA</td>
+ <td>28</td>
+ <td>24</td>
+ <td><span class="badge pending">Upcoming</span></td>
+ </tr>
+
+ <tr>
+ <td><strong>Wipro</strong></td>
+ <td>Project Engineer</td>
+ <td>₹5.8 LPA</td>
+ <td>30</td>
+ <td>27</td>
+ <td><span class="badge active-badge">Open</span></td>
+ </tr>
+
+ </tbody>
+
+ </table>
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+/* =========================================================
+   CANTEEN
+========================================================= */
+
+function canteen(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>🍱 Digital Canteen</h1>
+
+ <p>
+ Menu, stock and ordering
+ </p>
+
+ </div>
+
+ ${
+ role==="admin"
+ ?`
+
+ <button
+ class="btn btn-primary"
+ onclick="addFood()">
+
+ <i data-lucide="plus"></i>
+
+ Add Food
+
+ </button>
+
+ `
+ :""
+ }
+
+ </div>
+
+ <div class="dashboard-grid">
+
+ <div class="card">
+
+ <h2>Today's Menu</h2>
+
+ <br>
+
+ <div class="menu">
+
+ ${db.canteen.map(food=>`
+
+ <div class="food">
+
+ <h3>
+ ${escapeHTML(food.name)}
+ </h3>
+
+ <p style="color:var(--muted)">
+ ${food.category}
+ </p>
+
+ <p class="price">
+ ₹${food.price}
+ </p>
+
+ <p>
+ Stock:
+ <b>${food.stock}</b>
+ </p>
+
+ <br>
+
+ <div class="actions">
+
+ <button
+ class="btn btn-primary"
+ onclick="orderFood(${food.id})"
+ ${food.stock<=0?"disabled":""}>
+
+ ${food.stock<=0
+ ?"Out of Stock"
+ :"Order"}
+
+ </button>
+
+ ${
+ role==="admin"
+ ?`
+
+ <button
+ class="btn btn-light"
+ onclick="editFood(${food.id})">
+
+ Edit
+
+ </button>
+
+ `
+ :""
+ }
+
+ </div>
+
+ </div>
+
+ `).join("")}
+
+ </div>
+
+ </div>
+
+ <div class="card">
+
+ <h2>Recent Orders</h2>
+
+ <br>
+
+ ${
+ db.orders.length===0
+ ?`<p style="color:var(--muted)">
+ No orders yet.
+ </p>`
+ :
+ db.orders
+ .slice()
+ .reverse()
+ .slice(0,10)
+ .map(order=>`
+
+ <div
+ style="
+ padding:12px 0;
+ border-bottom:1px solid var(--border)">
+
+ <b>${escapeHTML(order.item)}</b>
+
+ × ${order.quantity}
+
+ <p style="color:var(--muted)">
+ ₹${order.total} ·
+ ${escapeHTML(order.user)}
+ </p>
+
+ <small>${order.time}</small>
+
+ </div>
+
+ `).join("")
+ }
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+function orderFood(id){
+
+ const food=
+ db.canteen.find(f=>f.id===id);
+
+ if(!food)return;
+
+ if(food.stock<=0){
+
+  showToast("Food is out of stock");
+
+  return;
+
+ }
+
+ food.stock--;
+
+ db.orders.push({
+
+  id:Date.now(),
+
+  item:food.name,
+
+  quantity:1,
+
+  total:food.price,
+
+  user:user.name,
+
+  time:new Date().toLocaleString()
+
+ });
+
+ saveDB();
+
+ render();
+
+ showToast("Canteen order placed ✓");
+
+}
+
+function addFood(){
+
+ showModal(`
+
+ <div class="modal-head">
+
+ <h2>Add Canteen Item</h2>
+
+ <button
+ class="close"
+ onclick="closeModal()">
+
+ ×
+
+ </button>
+
+ </div>
+
+ <div class="field">
+
+ <label>Food Name</label>
+
+ <input id="foodName">
+
+ </div>
+
+ <div class="field">
+
+ <label>Category</label>
+
+ <select id="foodCategory">
+
+ <option>Breakfast</option>
+ <option>Lunch</option>
+ <option>Dinner</option>
+ <option>Drinks</option>
+ <option>Snacks</option>
+
+ </select>
+
+ </div>
+
+ <div class="field">
+
+ <label>Price</label>
+
+ <input
+ id="foodPrice"
+ type="number">
+
+ </div>
+
+ <div class="field">
+
+ <label>Stock</label>
+
+ <input
+ id="foodStock"
+ type="number">
+
+ </div>
+
+ <div class="form-actions">
+
+ <button
+ class="btn btn-primary"
+ onclick="saveFood()">
+
+ Add Food
+
+ </button>
+
+ </div>
+
+ `);
+
+}
+
+function saveFood(){
+
+ const name=
+ document.getElementById("foodName")
+ .value.trim();
+
+ const category=
+ document.getElementById("foodCategory")
+ .value;
+
+ const price=
+ Number(
+  document.getElementById("foodPrice")
+  .value
+ );
+
+ const stock=
+ Number(
+  document.getElementById("foodStock")
+  .value
+ );
+
+ if(!name||price<0||stock<0){
+
+  showToast("Enter valid food details");
+
+  return;
+
+ }
+
+ db.canteen.push({
+
+  id:Date.now(),
+
+  name,
+  category,
+  price,
+  stock
+
+ });
+
+ saveDB();
+
+ closeModal();
+
+ render();
+
+ showToast("Food item added");
+
+}
+
+function editFood(id){
+
+ const food=
+ db.canteen.find(x=>x.id===id);
+
+ if(!food)return;
+
+ showModal(`
+
+ <div class="modal-head">
+
+ <h2>Edit Canteen Item</h2>
+
+ <button
+ class="close"
+ onclick="closeModal()">
+
+ ×
+
+ </button>
+
+ </div>
+
+ <div class="field">
+
+ <label>Food Name</label>
+
+ <input
+ id="editFoodName"
+ value="${escapeHTML(food.name)}">
+
+ </div>
+
+ <div class="field">
+
+ <label>Price</label>
+
+ <input
+ id="editFoodPrice"
+ type="number"
+ value="${food.price}">
+
+ </div>
+
+ <div class="field">
+
+ <label>Stock</label>
+
+ <input
+ id="editFoodStock"
+ type="number"
+ value="${food.stock}">
+
+ </div>
+
+ <button
+ class="btn btn-primary"
+ onclick="saveFoodEdit(${id})">
+
+ Save Changes
+
+ </button>
+
+ `);
+
+}
+
+function saveFoodEdit(id){
+
+ const food=
+ db.canteen.find(x=>x.id===id);
+
+ food.name=
+ document.getElementById("editFoodName")
+ .value;
+
+ food.price=
+ Number(
+  document.getElementById("editFoodPrice")
+  .value
+ );
+
+ food.stock=
+ Number(
+  document.getElementById("editFoodStock")
+  .value
+ );
+
+ saveDB();
+
+ closeModal();
+
+ render();
+
+ showToast("Canteen updated");
+
+}
+
+/* =========================================================
+   NOTICES
+========================================================= */
+
+function notices(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>📢 Notice Board</h1>
+
+ <p>
+ College announcements
+ </p>
+
+ </div>
+
+ ${
+ role==="admin"
+ ?`
+
+ <button
+ class="btn btn-primary"
+ onclick="addNotice()">
+
+ <i data-lucide="plus"></i>
+
+ Add Notice
+
+ </button>
+
+ `
+ :""
+ }
+
+ </div>
+
+ <div class="card">
+
+ ${db.notices.map(n=>`
+
+ <div class="notice">
+
+ <div
+ style="
+ display:flex;
+ justify-content:space-between;
+ gap:15px">
+
+ <div>
+
+ <h3>
+ ${escapeHTML(n.title)}
+ </h3>
+
+ <p>
+ ${escapeHTML(n.message)}
+ </p>
+
+ <small>
+ ${n.date}
+ </small>
+
+ </div>
+
+ <span class="badge ${
+ n.priority==="Urgent"
+ ?"inactive"
+ :n.priority==="Important"
+ ?"pending"
+ :"active-badge"
+ }">
+
+ ${n.priority}
+
+ </span>
+
+ </div>
+
+ </div>
+
+ `).join("")}
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+function addNotice(){
+
+ showModal(`
+
+ <div class="modal-head">
+
+ <h2>Create Notice</h2>
+
+ <button
+ class="close"
+ onclick="closeModal()">
+
+ ×
+
+ </button>
+
+ </div>
+
+ <div class="field">
+
+ <label>Title</label>
+
+ <input id="noticeTitle">
+
+ </div>
+
+ <div class="field">
+
+ <label>Message</label>
+
+ <textarea
+ id="noticeMessage"
+ rows="4"></textarea>
+
+ </div>
+
+ <div class="field">
+
+ <label>Priority</label>
+
+ <select id="noticePriority">
+
+ <option>Normal</option>
+ <option>Important</option>
+ <option>Urgent</option>
+
+ </select>
+
+ </div>
+
+ <button
+ class="btn btn-primary"
+ onclick="saveNotice()">
+
+ Publish Notice
+
+ </button>
+
+ `);
+
+}
+
+function saveNotice(){
+
+ const title=
+ document.getElementById("noticeTitle")
+ .value.trim();
+
+ const message=
+ document.getElementById("noticeMessage")
+ .value.trim();
+
+ const priority=
+ document.getElementById("noticePriority")
+ .value;
+
+ if(!title||!message){
+
+  showToast("Enter notice details");
+
+  return;
+
+ }
+
+ db.notices.unshift({
+
+  title,
+  message,
+  priority,
+  date:today()
+
+ });
+
+ saveDB();
+
+ closeModal();
+
+ render();
+
+ showToast("Notice published ✓");
+
+}
+
+/* =========================================================
+   COLLEGE
+========================================================= */
+
+function college(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>College Information</h1>
+
+ <p>
+ Institution profile
+ </p>
+
+ </div>
+
+ </div>
+
+ <div class="info-grid">
+
+ <div class="card">
+
+ <h2>College Overview</h2>
+
+ ${infoRow(
+ "College",
+ "Bangalore College of Engineering & Technology"
+ )}
+
+ ${infoRow(
+ "Established",
+ "2000"
+ )}
+
+ ${infoRow(
+ "University",
+ "Visvesvaraya Technological University (VTU), Belagavi"
+ )}
+
+ ${infoRow(
+ "Approval",
+ "AICTE, New Delhi"
+ )}
+
+ ${infoRow(
+ "Location",
+ "Chandapura, Bengaluru, Karnataka 560099"
+ )}
+
+ </div>
+
+ <div class="card">
+
+ <h2>Management</h2>
+
+ ${infoRow(
+ "Chairperson",
+ "Dr. Banumathi T"
+ )}
+
+ ${infoRow(
+ "Principal",
+ "Dr. Gopalaiah"
+ )}
+
+ ${infoRow(
+ "Phone",
+ "9742258636"
+ )}
+
+ ${infoRow(
+ "Email",
+ "bcetcollege@yahoo.com"
+ )}
+
+ </div>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+function infoRow(label,value){
+
+ return`
+
+ <div class="info-row">
+
+ <strong>${label}</strong>
+
+ <span>${escapeHTML(value)}</span>
+
+ </div>
+
+ `;
+
+}
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+function chatPage(){
+
+ return`
+
+ <section class="section active">
+
+ <div class="title">
+
+ <div>
+
+ <h1>🤖 BCET AI Assistant</h1>
+
+ <p>
+ Student and college support assistant
+ </p>
+
+ </div>
+
+ <button
+ class="btn btn-primary"
+ onclick="toggleChat()">
+
+ Open Chat
+
+ </button>
+
+ </div>
+
+ <div class="card">
+
+ <h2>Ask the BCET Assistant</h2>
+
+ <br>
+
+ <p style="color:var(--muted);line-height:1.8">
+
+ The assistant can help you search student
+ records, fees, courses, attendance,
+ placements, canteen information and
+ college contact details.
+
+ </p>
+
+ </div>
+
+ </section>
+
+ `;
+
+}
+
+function toggleChat(){
+
+ document
+ .getElementById("chat")
+ .classList.toggle("open");
+
+}
+
+function sendChat(){
+
+ const input=
+ document.getElementById("chatInput");
+
+ const text=input.value.trim();
+
+ if(!text)return;
+
+ addChat(
+  escapeHTML(text),
+  "user"
+ );
+
+ input.value="";
+
+ setTimeout(()=>{
+
+  addChat(
+   getBotAnswer(text),
+   "bot"
+  );
+
+ },400);
+
+}
+
+function addChat(text,type){
+
+ const body=
+ document.getElementById("chatBody");
+
+ const div=
+ document.createElement("div");
+
+ div.className="msg "+type;
+
+ div.innerHTML=text;
+
+ body.appendChild(div);
+
+ body.scrollTop=
+ body.scrollHeight;
+
+}
+
+function getBotAnswer(text){
+
+ const q=text.toLowerCase();
+
+ if(
+ q.includes("student")||
+ q.includes("students")
+ ){
+
+  return`
+
+  There are currently
+  <strong>${db.students.length}</strong>
+  students in the database.
+
+  <br><br>
+
+  You can search students by name,
+  USN, department, phone or email.
+
+  `;
+
+ }
+
+ const student=
+ db.students.find(s=>
+  q.includes(
+   s.name.toLowerCase().split(" ")[0]
+  )||
+  q.includes(s.usn.toLowerCase())
+ );
+
+ if(student){
+
+  return`
+
+  <strong>${escapeHTML(student.name)}</strong>
+
+  <br>
+
+  USN: ${student.usn}
+
+  <br>
+
+  Department: ${student.dept}
+
+  <br>
+
+  Year: ${student.year}
+
+  <br>
+
+  Attendance: ${student.attendance}%
+
+  <br>
+
+  Fee Pending:
+  ₹${(student.totalFee-student.paidFee)
+  .toLocaleString()}
+
+  `;
+
+ }
+
+ if(
+ q.includes("course")||
+ q.includes("courses")
+ ){
+
+  return`
+
+  BCET currently has
+  <strong>${db.courses.length}</strong>
+  courses listed in this portal.
+
+  `;
+
+ }
+
+ if(q.includes("fee")){
+
+  return`
+
+  Student fee information is available
+  in the <strong>Fees</strong> section.
+
+  `;
+
+ }
+
+ if(q.includes("attendance")){
+
+  return`
+
+  Student attendance can be viewed
+  from the Attendance section.
+  Face Recognition can also be used
+  for attendance.
+
+  `;
+
+ }
+
+ if(q.includes("placement")){
+
+  return`
+
+  The placement dashboard currently
+  shows an <strong>87%</strong>
+  placement rate.
+
+  `;
+
+ }
+
+ if(q.includes("canteen")||q.includes("food")){
+
+  return`
+
+  The digital canteen has
+  <strong>${db.canteen.length}</strong>
+  menu items.
+
+  `;
+
+ }
+
+ if(
+ q.includes("contact")||
+ q.includes("phone")||
+ q.includes("email")
+ ){
+
+  return`
+
+  College Phone:
+  <strong>9742258636</strong>
+
+  <br>
+
+  Email:
+  <strong>bcetcollege@yahoo.com</strong>
+
+  `;
+
+ }
+
+ return`
+
+ I can help with:
+
+ <br><br>
+
+ • Student details<br>
+ • Student search<br>
+ • Attendance<br>
+ • Fees<br>
+ • Courses<br>
+ • Teachers<br>
+ • Placements<br>
+ • Canteen<br>
+ • College information
+
+ `;
+
+}
+
+/* =========================================================
+   CHARTS
+========================================================= */
+
+function createCharts(){
+
+ const enrollment=
+ document.getElementById("enrollmentChart");
+
+ const department=
+ document.getElementById("departmentChart");
+
+ if(!enrollment||!department)
+ return;
+
+ if(enrollmentChart)
+ enrollmentChart.destroy();
+
+ if(departmentChart)
+ departmentChart.destroy();
+
+ enrollmentChart=
+ new Chart(enrollment,{
+
+  type:"line",
+
+  data:{
+
+   labels:[
+    "Jan","Feb","Mar","Apr",
+    "May","Jun","Jul","Aug","Sep"
+   ],
+
+   datasets:[{
+
+    label:"Students",
+
+    data:[
+     1020,
+     1060,
+     1095,
+     1130,
+     1160,
+     1190,
+     1215,
+     1240,
+     db.students.length
+    ],
+
+    borderColor:"#176db0",
+
+    backgroundColor:
+    "rgba(23,109,176,.12)",
+
+    borderWidth:3,
+
+    tension:.4,
+
+    fill:true
+
+   }]
+
+  },
+
+  options:{
+
+   responsive:true,
+
+   maintainAspectRatio:false,
+
+   plugins:{
+    legend:{
+     display:true
+    }
+   }
+
+  }
+
+ });
+
+ departmentChart=
+ new Chart(department,{
+
+  type:"doughnut",
+
+  data:{
+
+   labels:[
+    "CSE",
+    "ISE",
+    "ECE",
+    "ME",
+    "CIVIL"
+   ],
+
+   datasets:[{
+
+    data:getDepartmentCounts(),
+
+    backgroundColor:[
+     "#176db0",
+     "#14966d",
+     "#ed9919",
+     "#dc4d42",
+     "#7c5cff"
+    ],
+
+    borderWidth:2
+
+   }]
+
+  },
+
+  options:{
+
+   responsive:true,
+
+   maintainAspectRatio:false,
+
+   cutout:"65%"
+
+  }
+
+ });
+
+}
+
+function getDepartmentCounts(){
+
+ return[
+
+  db.students.filter(
+   s=>s.dept==="CSE"
+  ).length,
+
+  db.students.filter(
+   s=>s.dept==="ISE"
+  ).length,
+
+  db.students.filter(
+   s=>s.dept==="ECE"
+  ).length,
+
+  db.students.filter(
+   s=>s.dept==="ME"
+  ).length,
+
+  db.students.filter(
+   s=>s.dept==="CIVIL"
+  ).length
+
+ ];
+
+}
+
+function changeChart(year){
+
+ if(!enrollmentChart)return;
+
+ let data;
+
+ if(year==="2026"){
+
+  data=[
+   1040,
+   1080,
+   1110,
+   1140,
+   1175,
+   1200,
+   1230,
+   1260,
+   db.students.length
+  ];
+
+ }
+
+ else if(year==="2025"){
+
+  data=[
+   900,
+   930,
+   960,
+   985,
+   1010,
+   1040,
+   1060,
+   1090,
+   1120
+  ];
+
+ }
+
+ else{
+
+  data=[
+   780,
+   810,
+   840,
+   870,
+   900,
+   930,
+   950,
+   980,
+   1000
+  ];
+
+ }
+
+ enrollmentChart
+ .data
+ .datasets[0]
+ .data=data;
+
+ enrollmentChart.update();
+
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+function showModal(html){
+
+ document
+ .getElementById("modalContent")
+ .innerHTML=html;
+
+ document
+ .getElementById("modal")
+ .classList.add("show");
+
+ lucide.createIcons();
+
+}
+
+function closeModal(){
+
+ document
+ .getElementById("modal")
+ .classList.remove("show");
+
+}
+
+document
+.getElementById("modal")
+.addEventListener("click",e=>{
+
+ if(e.target.id==="modal")
+ closeModal();
+
+});
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+function showToast(message){
+
+ const toast=
+ document.getElementById("toast");
+
+ toast.innerText=message;
+
+ toast.classList.add("show");
+
+ setTimeout(()=>{
+
+  toast.classList.remove("show");
+
+ },2500);
+
+}
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+document.addEventListener(
+ "DOMContentLoaded",
+ ()=>{
+
+  if(
+   localStorage.getItem("BCET_DARK")==="true"
+  ){
+
+   document.body.classList.add("dark");
+
+  }
+
+  saveDB();
+
+  lucide.createIcons();
+
+ }
+);
+
+</script>
+
+</body>
+</html>
